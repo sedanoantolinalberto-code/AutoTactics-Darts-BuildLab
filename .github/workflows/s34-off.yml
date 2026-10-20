@@ -1,0 +1,51 @@
+name: S34 Windows OFF compile audit
+on:
+  workflow_dispatch:
+    inputs:
+      zero_cost_verified:
+        description: Current quota and enforced zero paid usage independently verified
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: s34-off-build
+  cancel-in-progress: false
+jobs:
+  compile-audit:
+    if: >-
+      github.repository == 'sedanoantolinalberto-code/AutoTactics-Darts-BuildLab' &&
+      github.event.repository.private == true &&
+      startsWith(github.ref, 'refs/heads/s34/') &&
+      inputs.zero_cost_verified == true
+    runs-on: windows-2022
+    timeout-minutes: 2
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify manifest and 47 Python tests
+        run: |
+          Set-Location build-input
+          python tools/reference_manifest.py verify
+          if ($LASTEXITCODE -ne 0) { throw 'Manifest failed' }
+          python -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { throw 'Python tests failed' }
+          python tools/verify_compile_plan.py --manifest
+          if ($LASTEXITCODE -ne 0) { throw 'Static plan failed' }
+      - name: MSVC OFF build and portable tests and import audit
+        run: |
+          & ./ci/collect.ps1
+      - name: Preserve text evidence only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: s34-off-evidence
+          path: ${{ runner.temp }}/s34-evidence/
+          retention-days: 1
+          if-no-files-found: warn
+          compression-level: 9
