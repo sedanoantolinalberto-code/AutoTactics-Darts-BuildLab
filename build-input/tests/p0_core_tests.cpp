@@ -1,5 +1,9 @@
+// Emulate the pre-existing RGB macro in Windows.h before including p0_core.hpp.
+// This macro must not rewrite any identifier declared by our header.
+#define RGB(red, green, blue) 0x00AABBCCu
 #include "p0_core.hpp"
 #include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <set>
@@ -35,15 +39,15 @@ int main() {
     MustThrow([]{ (void)MakePattern(24); });
     auto f=MakePattern(0);
     Must(f.size()==static_cast<std::size_t>(W)*H,"frame size");
-    Must(f[Offset(10,10)]==RGB(245,25,25),"TL red");
-    Must(f[Offset(W-10,10)]==RGB(25,230,35),"TR green");
-    Must(f[Offset(10,H-10)]==RGB(25,50,235),"BL blue");
-    Must(f[Offset(W-10,H-10)]==RGB(235,222,24),"BR yellow");
+    Must(f[Offset(10,10)]==PackRgb32(245,25,25),"TL red");
+    Must(f[Offset(W-10,10)]==PackRgb32(25,230,35),"TR green");
+    Must(f[Offset(10,H-10)]==PackRgb32(25,50,235),"BL blue");
+    Must(f[Offset(W-10,H-10)]==PackRgb32(235,222,24),"BR yellow");
     Must(Offset(0,0)==static_cast<std::size_t>(H-1)*W,"bottom-up row");
     Must(Offset(0,H-1)==0,"bottom row first");
     MustThrow([]{ (void)Offset(W,0); });
     MustThrow([]{ (void)Offset(0,H); });
-    MustThrow([&]{ Rectangle(f,1,1,W+1,H,RGB(1,2,3)); });
+    MustThrow([&]{ Rectangle(f,1,1,W+1,H,PackRgb32(1,2,3)); });
     Must(MakePattern(1)!=f,"moving frame differs");
     Must(MakePattern(1)!=MakePattern(2),"unique next frame");
     std::set<unsigned> visual_ids;
@@ -51,7 +55,7 @@ int main() {
         auto pattern=MakePattern(i);
         unsigned signature=0;
         for(std::uint32_t bit=0;bit<5;++bit)
-            if(pattern[Offset(100+bit*114,755)]==RGB(255,255,255))
+            if(pattern[Offset(100+bit*114,755)]==PackRgb32(255,255,255))
                 signature|=(1u<<bit);
         Must(signature==i,"frame identity visible as 5-bit diagnostic flags");
         visual_ids.insert(signature);
