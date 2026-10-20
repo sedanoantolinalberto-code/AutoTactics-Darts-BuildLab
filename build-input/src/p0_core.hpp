@@ -27,7 +27,7 @@ inline std::int64_t Duration(std::uint32_t n, std::uint32_t frame_limit) {
     return Tick(n + 1, frame_limit) - Tick(n, frame_limit);
 }
 
-inline constexpr std::uint32_t RGB(std::uint8_t r, std::uint8_t g, std::uint8_t b) {
+inline constexpr std::uint32_t PackRgb32(std::uint8_t r, std::uint8_t g, std::uint8_t b) {
     // DWORD memory layout on little-endian Windows: B,G,R,0.
     return (std::uint32_t(r) << 16) | (std::uint32_t(g) << 8) | b;
 }
@@ -47,21 +47,21 @@ inline void Rectangle(Frame& pixels, std::uint32_t x0, std::uint32_t y0,
 }
 inline Frame MakePattern(std::uint32_t index) {
     if (index >= TEST_FRAMES) throw std::out_of_range("P0 index");
-    Frame f(static_cast<std::size_t>(W)*H, RGB(22,22,29));
+    Frame f(static_cast<std::size_t>(W)*H, PackRgb32(22,22,29));
     constexpr std::uint32_t block = 140;
-    Rectangle(f, 0,0,block,block, RGB(245,25,25));          // TL red
-    Rectangle(f, W-block,0,W,block, RGB(25,230,35));       // TR green
-    Rectangle(f, 0,H-block,block,H, RGB(25,50,235));       // BL blue
-    Rectangle(f, W-block,H-block,W,H, RGB(235,222,24));   // BR yellow
-    Rectangle(f, 0, H/3, W, H/3+9, RGB(255,255,255));   // asymmetric horizontal guide
-    Rectangle(f, W/2,0,W/2+9,H, RGB(200,40,210));      // vertical guide
+    Rectangle(f, 0,0,block,block, PackRgb32(245,25,25));          // TL red
+    Rectangle(f, W-block,0,W,block, PackRgb32(25,230,35));       // TR green
+    Rectangle(f, 0,H-block,block,H, PackRgb32(25,50,235));       // BL blue
+    Rectangle(f, W-block,H-block,W,H, PackRgb32(235,222,24));   // BR yellow
+    Rectangle(f, 0, H/3, W, H/3+9, PackRgb32(255,255,255));   // asymmetric horizontal guide
+    Rectangle(f, W/2,0,W/2+9,H, PackRgb32(200,40,210));      // vertical guide
     // 24 distinctive synthetic frames: clear white motion block and 5-bit index flags.
     const auto x0 = std::uint32_t(60 + index * 22);
-    Rectangle(f, x0, 480, x0+35, 540, RGB(246,246,246));
+    Rectangle(f, x0, 480, x0+35, 540, PackRgb32(246,246,246));
     for (std::uint32_t bit=0; bit<5; ++bit) {
         const bool on = (index & (1u<<bit)) != 0;
         Rectangle(f, 70 + bit*114, 730, 140 + bit*114, 840,
-                  on ? RGB(255,255,255) : RGB(65,65,65));
+                  on ? PackRgb32(255,255,255) : PackRgb32(65,65,65));
     }
     return f;
 }
