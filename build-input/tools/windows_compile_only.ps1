@@ -57,6 +57,9 @@ Assert-CMakeOff (Join-Path $target 'CMakeCache.txt')
 # Review the *actual* disabled executable import table and generated linker inputs.
 & (Join-Path $source 'tools/windows_off_binary_audit.ps1') -BuildDir $target
 Assert-CMakeOff (Join-Path $target 'CMakeCache.txt')
+# Dedicated writer-capable link test; no executable invocation. Only after OFF audit.
+& (Join-Path $source 'tools/windows_link_only_probe.ps1') -BuildDir $target
+Assert-CMakeOff (Join-Path $target 'CMakeCache.txt')
 & python (Join-Path $source 'tools/verify_compile_plan.py') '--root' $source '--cache' (Join-Path $target 'CMakeCache.txt') '--manifest'
 if ($LASTEXITCODE -ne 0) { throw ('plan or manifest failed: ' + $LASTEXITCODE) }
 Write-Host ("SOURCE-ONLY Windows compile complete; MF executable NOT run. Started: $start")

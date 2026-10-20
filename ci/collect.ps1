@@ -18,7 +18,7 @@ try {
     $after | ConvertTo-Json | Set-Content (Join-Path $evidence 'binary-sha256-post.json')
     if (($before | ConvertTo-Json -Compress) -cne ($after | ConvertTo-Json -Compress)) { throw 'Binary hashes changed' }
 } finally {
-    foreach ($name in @('CMakeCache.txt','mf_p0_windows.vcxproj','mf_p0_writer_compile_probe.vcxproj','MF_P0_OFF_IMPORTS_dumpbin.txt')) {
+    foreach ($name in @('CMakeCache.txt','mf_p0_windows.vcxproj','mf_p0_writer_compile_probe.vcxproj','MF_P0_OFF_IMPORTS_dumpbin.txt','mf_p0_link_only_probe.vcxproj','MF_P0_LINK_IMPORTS_dumpbin.txt')) {
         $item = Join-Path $build $name
         if (Test-Path $item) { Copy-Item -LiteralPath $item -Destination $evidence }
     }

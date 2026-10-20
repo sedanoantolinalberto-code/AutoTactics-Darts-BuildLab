@@ -1,20 +1,23 @@
 {
-  "schema": "s34-v24-rgb-winmacro-fix",
+  "schema": "s34-v25-mf-link-only-sha256",
   "files": {
-    "CMakeLists.txt": "5ab84ec3f62368b5e5642617d257077674f0abc331c5f928aa61a24c30cc071c",
+    "CMakeLists.txt": "0d354c2f74768965b73746c32ef2537cd4f873f97220bee270b7bcd9d63462a1",
     "src/mf_p0_windows.cpp": "9ce88ba693db267d3412e2aa7c5f2e52300155cee50be8326f9cc9e7852bc77e",
     "src/mf_p0_writer.cpp": "7454e0719e81ad6b81a12845c11146f7db5e2c9b7312afca43eb374252ab0f31",
     "src/p0_core.hpp": "0412abe0a78ae5dc81971f51ec1e75887caf9e48e10b106cc8d35d9d5d05ab7a",
     "src/p0_gate.hpp": "82830a1f960b26917716f3063ff71e4a366efab4628b0e9da991fd04b997d15d",
+    "tests/mf_p0_link_only_entry.cpp": "65f08e658eef7b627db344da492b19b52f9d6e01ba367ae4ac3831aed25497b7",
     "tests/p0_core_tests.cpp": "3048686f9ae90fd8a310559d5cfab22535270da463fd04c694f29245568bf88b",
     "tests/p0_gate_tests.cpp": "a769f7d815ebf1bf91529966e1d5c6e3c83e34bc6468525f25a64d476d8b02b3",
+    "tests/test_link_only_probe_contract.py": "562c90152d1624cff1585c9868645d747a64ce03a45b98aabe34d11972e98953",
     "tests/test_static_review.py": "16257302becedf0e809878f4e5ef3061921145fd9b93b29548fbeb7b3c161a8c",
     "tests/test_windows_compile_plan.py": "4295a77e46aeb34551722a659466652af9571037874af41c9b80987cd93ca2bc",
     "tests/test_windows_off_binary_audit.py": "1db5205d53ba7393be84e1092923b28b8fd312d412b40c0faef6dd9f6135f056",
     "tools/audit_windows_off_link.py": "60bb1b10df1cc1b18b3511ee98648fb592b14942591707f6ece2aef7f8a88973",
     "tools/reference_manifest.py": "f3d94add4075f61b57ffba0fc713dd0a6acf41f949f8934e0fddcd1031707af7",
     "tools/verify_compile_plan.py": "428895ebc6a7306afb8be057ee8fd307ab62c31e2a17bef78721b12495ede42c",
-    "tools/windows_compile_only.ps1": "f6e341c3bafec6cb6ef641184223dc5e8a38eb76502e9387427c21bc490a77c5",
+    "tools/windows_compile_only.ps1": "86617d969c8a8f989c10aa6dcf459b9f673f0900a089f6bef41e4888c5fb5674",
+    "tools/windows_link_only_probe.ps1": "0e490fd67c1622213f3d1a6561d2f128996773e9c3ff80bd85f27a3bf54e3670",
     "tools/windows_off_binary_audit.ps1": "50d8928f678da51b4d138b65c0e1bc34f2e8019efe1c6cf8acc1f75d6b7722de"
   }
 }

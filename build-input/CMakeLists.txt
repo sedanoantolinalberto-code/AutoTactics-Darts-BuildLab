@@ -27,6 +27,16 @@ if(WIN32 AND MSVC)
     else()
         target_compile_definitions(mf_p0_windows PRIVATE ENGINEYT_ALLOW_NONPOLICY_MEDIA_OUTPUT=0)
     endif()
+    # Explicit, separate link-only probe, never part of the default ALL build.
+    # Its entry point returns 2 and NEVER calls Media Foundation or any writer.
+    # Force the RunExperimentalMedia symbol to stay in the link to validate
+    # SDK/import-library resolution (avoid an optimized-away false PASS).
+    add_executable(mf_p0_link_only_probe EXCLUDE_FROM_ALL
+        tests/mf_p0_link_only_entry.cpp
+        $<TARGET_OBJECTS:mf_p0_writer_compile_probe>)
+    target_compile_options(mf_p0_link_only_probe PRIVATE /W4)
+    target_link_options(mf_p0_link_only_probe PRIVATE "/INCLUDE:?RunExperimentalMedia@@YAHXZ")
+    target_link_libraries(mf_p0_link_only_probe PRIVATE mfreadwrite mfplat mfuuid ole32)
 else()
     message(STATUS "MF-P0 Windows targets NOT built on this platform; source tests only")
 endif()
