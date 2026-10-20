@@ -1,12 +1,12 @@
 {
-  "schema": "s34-v22-minimal-subset",
+  "schema": "s34-v24-rgb-winmacro-fix",
   "files": {
     "CMakeLists.txt": "5ab84ec3f62368b5e5642617d257077674f0abc331c5f928aa61a24c30cc071c",
     "src/mf_p0_windows.cpp": "9ce88ba693db267d3412e2aa7c5f2e52300155cee50be8326f9cc9e7852bc77e",
     "src/mf_p0_writer.cpp": "7454e0719e81ad6b81a12845c11146f7db5e2c9b7312afca43eb374252ab0f31",
-    "src/p0_core.hpp": "7637e5bafae457dc7f083161a67c88ec259d4a75401b0857e337e3dbc8bbd315",
+    "src/p0_core.hpp": "0412abe0a78ae5dc81971f51ec1e75887caf9e48e10b106cc8d35d9d5d05ab7a",
     "src/p0_gate.hpp": "82830a1f960b26917716f3063ff71e4a366efab4628b0e9da991fd04b997d15d",
-    "tests/p0_core_tests.cpp": "1d146aa486d1a8d9ffefb15015bd78b9a659370ddb428a2799e59ba5e2584d59",
+    "tests/p0_core_tests.cpp": "3048686f9ae90fd8a310559d5cfab22535270da463fd04c694f29245568bf88b",
     "tests/p0_gate_tests.cpp": "a769f7d815ebf1bf91529966e1d5c6e3c83e34bc6468525f25a64d476d8b02b3",
     "tests/test_static_review.py": "16257302becedf0e809878f4e5ef3061921145fd9b93b29548fbeb7b3c161a8c",
     "tests/test_windows_compile_plan.py": "4295a77e46aeb34551722a659466652af9571037874af41c9b80987cd93ca2bc",
