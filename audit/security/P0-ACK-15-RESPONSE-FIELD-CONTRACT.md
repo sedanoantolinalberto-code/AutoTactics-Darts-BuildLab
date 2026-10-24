@@ -44,3 +44,11 @@ The parent does not enforce exact response key sets; a syntactically valid respo
 5. Review any proposed implementation separately, preserve original ZIPs and main.
 
 **Gates unchanged:** E5B4D_NO-GO, SEC-02 Windows NOT_RUN, RENDER_NO-GO, PUBLISH_NO-GO. No production code modified.
+
+## Existing historical test coverage versus parent enforcement
+
+The integrated ZIP also contains `test_v055.py:95–118`. In its mainline loop, the **test harness** computes an independent reference `PublicEpisodeSession` view and asserts that the worker ACK's `remaining`, `camera_role`, `overlay_phase`, `subtitle`, and `cue` equal expected values (`:107–111`). It separately asserts `final['intent_count'] == len(ref.audio_intents)` (`:115–117`).
+
+This is useful **historical nominal-path test coverage**, not validation performed by `PublicChild.send()` or `finish()`. It does not contradict ACK-03. This audit has **not executed** `test_v055.py`, and these checks alone do not establish behavior of a compromised worker. The only observed in-package call sites of `PublicChild.send` outside its own class are in `test_v055.py` and `test_transport_v055.py`; no claim is made about external application callers.
+
+Additional narrow parsing observations: `hello.get('v') != 1` uses equality rather than an exact integer-type check, and the HELLO nonce is checked by decoded length but not by a canonical Base64 round-trip. These are schema-consistency review candidates, not independently demonstrated exploits.
