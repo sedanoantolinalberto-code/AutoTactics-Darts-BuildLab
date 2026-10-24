@@ -83,5 +83,6 @@ Use this index to locate the relevant evidence without treating documentary comm
 | What process and byte limits remain unproven? | [Lifecycle obligations](../security/P0-TERM-06-LIFECYCLE-PROOF-OBLIGATIONS.md) | STATIC SOURCE REVIEW |
 | What do the nine fake-worker tests establish? | [Independent test coverage](../security/P0-TEST-11-INDEPENDENT-COVERAGE.md) | STATIC_REPRODUCED; tests NOT_RUN here |
 | What patches are proposed? | [Unapplied hardening diffs](../security/P0-HARDENING-09-PROPOSED-DIFFS.md) | PROPOSED_NOT_APPLIED |
+| Which ACK presentation values are actually permitted by existing public ports? | [Source-derived response contract](../security/P0-ACK-16-SOURCE-DERIVED-RESPONSE-CONTRACT.md) | STATIC_REPRODUCED extraction; PROPOSED_NOT_APPLIED schema |
 | What exact evidence would allow gate decisions? | [Acceptance contract](../decisions/GATE-13-EVIDENCE-ACCEPTANCE-CONTRACT.md) | PROPOSED_ACCEPTANCE_CRITERIA |
 | Why is functional execution still blocked? | [Model M ADR](../decisions/ADR-P0-001-MODEL-M.md) | FROZEN_NO_GO |
