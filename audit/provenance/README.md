@@ -84,5 +84,7 @@ Use this index to locate the relevant evidence without treating documentary comm
 | What do the nine fake-worker tests establish? | [Independent test coverage](../security/P0-TEST-11-INDEPENDENT-COVERAGE.md) | STATIC_REPRODUCED; tests NOT_RUN here |
 | What patches are proposed? | [Unapplied hardening diffs](../security/P0-HARDENING-09-PROPOSED-DIFFS.md) | PROPOSED_NOT_APPLIED |
 | Which ACK presentation values are actually permitted by existing public ports? | [Source-derived response contract](../security/P0-ACK-16-SOURCE-DERIVED-RESPONSE-CONTRACT.md) | STATIC_REPRODUCED extraction; PROPOSED_NOT_APPLIED schema |
+| How are successful child exit and secondary cleanup errors observed in the latest draft? | [ACK-23 observations](../security/P0-ACK-23-EXIT-OBSERVATION-DIAGNOSTICS.md) | STATIC_AST_PASS; proposal NOT_APPLIED / NOT_RUN |
+| Are stdout/stderr reader threads confirmed terminated? | [ACK-24 thread lifecycle](../security/P0-ACK-24-READER-THREAD-LIFECYCLE.md) | STATIC_AST_PASS; no joins found; runtime NOT_RUN |
 | What exact evidence would allow gate decisions? | [Acceptance contract](../decisions/GATE-13-EVIDENCE-ACCEPTANCE-CONTRACT.md) | PROPOSED_ACCEPTANCE_CRITERIA |
 | Why is functional execution still blocked? | [Model M ADR](../decisions/ADR-P0-001-MODEL-M.md) | FROZEN_NO_GO |
