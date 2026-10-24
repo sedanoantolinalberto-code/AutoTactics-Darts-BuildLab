@@ -1,0 +1,84 @@
+{
+  "schema_version": "0.1",
+  "created_date": "2026-10-24",
+  "scope": "documentary_risk_register_only",
+  "gate_policy": {
+    "E5B4D": "NO_GO",
+    "render": "NO_GO",
+    "publish": "NO_GO",
+    "strict_policy_B": "All relevant processes terminated and termination confirmed strictly before 120 seconds; stdout and stderr each <=1048576 bytes emitted and accepted throughout lifetime; model M arbitrary OS suspension"
+  },
+  "findings": [
+    {
+      "id": "SEC-02",
+      "classification": "REPORTED_SYNTHETIC_FINDING_AND_STATIC_RISK",
+      "status": "OPEN",
+      "affected_scope": "synthetic worker launch; OS file permissions",
+      "basis": "Earlier static review and synthetic test reports; Windows reproduction NOT_RUN",
+      "unverified": "Effective Windows ACL/token boundary and independent reproduction",
+      "next_documentary_step": "Map exact process spawn, token, env and path access call sites; preserve raw evidence",
+      "gate_impact": "No promotion to OS-confinement PASS"
+    },
+    {
+      "id": "ACK-02",
+      "classification": "STATIC_CONCERN",
+      "status": "OPEN",
+      "affected_scope": "worker ACK/COMMITTED response trust",
+      "basis": "Previously reported unsigned response behavior",
+      "unverified": "No adversarial receiver execution or independent attestation",
+      "next_documentary_step": "Define trust model and specify observable proof of application, not just receipt",
+      "gate_impact": "ACK alone insufficient for processing attestation"
+    },
+    {
+      "id": "STDIN-01",
+      "classification": "STATIC_CONCERN",
+      "status": "OPEN",
+      "affected_scope": "synchronous parent write to child stdin",
+      "basis": "Previously reported call ordering write before bounded read",
+      "unverified": "Blocked-pipe reproduction under controlled failure model",
+      "next_documentary_step": "Trace write and process lifecycle in exact v0.55 source",
+      "gate_impact": "Timeout on read does not bound preceding write"
+    },
+    {
+      "id": "HELLO-01",
+      "classification": "STATIC_HARDENING_CANDIDATE",
+      "status": "OPEN",
+      "affected_scope": "PID claimed in handshake vs real child PID",
+      "basis": "Earlier static review",
+      "unverified": "Exploitability and all later identity checks",
+      "next_documentary_step": "Record line references and protocol invariants",
+      "gate_impact": "Do not claim worker identity attested"
+    },
+    {
+      "id": "TEST-ENV-01",
+      "classification": "STATIC_TEST_HYGIENE_CANDIDATE",
+      "status": "OPEN",
+      "affected_scope": "synthetic probe environment variable cleanup",
+      "basis": "Earlier static review",
+      "unverified": "Behavior on every exceptional exit path",
+      "next_documentary_step": "Review cleanup path; propose try/finally restoration",
+      "gate_impact": "No production vulnerability claim"
+    },
+    {
+      "id": "E5B4D",
+      "classification": "FORMAL_GOVERNANCE_DECISION",
+      "status": "FROZEN_NO_GO",
+      "affected_scope": "strict Policy B under arbitrary OS suspension model M",
+      "basis": "Frozen project decision",
+      "unverified": "Any compatible mechanism to guarantee strict bounds",
+      "next_documentary_step": "Document mutually exclusive formal policy alternatives without silent relaxation",
+      "gate_impact": "NO_GO"
+    }
+  ],
+  "evidence_policy": {
+    "source_proof_required": [
+      "exact_artifact_sha256",
+      "path_within_artifact",
+      "line_or_byte_offsets",
+      "methodology",
+      "raw_output_or_document_ref",
+      "test_environment_if_executed"
+    ],
+    "unknown_values": "Use null/NOT_RUN; never substitute historical report for fresh execution"
+  }
+}
