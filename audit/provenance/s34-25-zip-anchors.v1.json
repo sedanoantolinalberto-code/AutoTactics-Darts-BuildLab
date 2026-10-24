@@ -1,0 +1,343 @@
+{
+  "schema_version": "1.0",
+  "generated_date": "2026-10-24",
+  "evidence_class": "STATIC_REPRODUCED",
+  "scope": "25 local S34 ZIPs; no Darts modules executed",
+  "method": "Read-only Python stdlib hashlib/zipfile; byte SHA-256; CRC; names, member safety; six nested-byte comparisons",
+  "source_audit_script_sha256": "d77e28a0e482c57e40b3e880e493a36e7000e5b3a1ac92076c77c5490400c04f",
+  "source_full_results_sha256": "9868f551065c0911e8564c3d0cab0a0eac2a1b1dcd4e315487f5ca6e7ae120e1",
+  "summary": {
+    "packages": 25,
+    "zip_crc_pass": 25,
+    "manifests_identified": 98,
+    "entries_total": 1368,
+    "bytes_total": 2542251,
+    "unsafe_paths": 0,
+    "duplicate_paths": 0,
+    "symlinks": 0,
+    "casefold_collisions": 0,
+    "byte_containment_edges_pass": 6,
+    "previous_report_crosschecks_pass": 25
+  },
+  "packages": [
+    {
+      "version": "030",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 41054,
+      "zip_entries": 19,
+      "manifest_count": 2,
+      "sha256": "6ed38b050c800da366f14cdbfbc49ed749cf3634071306d6e84be90593255fc7",
+      "filename": "EngineYT_Darts_S34_v030_AuditoriaParcial_SourceOnly_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "031",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 48311,
+      "zip_entries": 27,
+      "manifest_count": 2,
+      "sha256": "4db1b4bbe28b75fee0ac637896a2d1255615aa17e1adb5da96cbe4a10f020b9f",
+      "filename": "EngineYT_Darts_S34_v031_EditorialMetadataGuard_SourceOnly_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "034",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 344650,
+      "zip_entries": 108,
+      "manifest_count": 6,
+      "sha256": "96bd0262526a64ff791ebfcb40fe65e07a40bf7e2ac990e59011837effe5c127",
+      "filename": "EngineYT_Darts_S34_v034_FrameBoundary_SourceOnly_PRIVATE.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "035",
+      "variant": "NOT_INTEGRATED",
+      "size_bytes": 62279,
+      "zip_entries": 37,
+      "manifest_count": 3,
+      "sha256": "e8615b7fee578ced3b8dbe008d75819ef0b38620e5343918cfa0c4e30c866ea0",
+      "filename": "EngineYT_Darts_S34_v035_MailboxResearchSpike_SourceOnly_NOT_INTEGRATED_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "036",
+      "variant": "NOT_INTEGRATED",
+      "size_bytes": 74248,
+      "zip_entries": 40,
+      "manifest_count": 3,
+      "sha256": "8e045b1094bb6844b4675809a1e2e552b86227624fb1177d691b322bd8403dc2",
+      "filename": "EngineYT_Darts_S34_v036_PublicWireContract_SourceOnly_NOT_INTEGRATED_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "037",
+      "variant": "NOT_INTEGRATED",
+      "size_bytes": 94089,
+      "zip_entries": 52,
+      "manifest_count": 4,
+      "sha256": "626e7a22bf884bf913f170b411b5d7e4659e750a9cc0779500b11787a3f26b82",
+      "filename": "EngineYT_Darts_S34_v037_OfflineSignedFrames_SourceOnly_NOT_INTEGRATED_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "038",
+      "variant": "NOT_INTEGRATED",
+      "size_bytes": 116964,
+      "zip_entries": 67,
+      "manifest_count": 5,
+      "sha256": "14022f87ec02d334ccbe82b3bc66b04322b5b6c344693858b38a0d420c6709ac",
+      "filename": "EngineYT_Darts_S34_v038_DurableReplay_SourceOnly_NOT_INTEGRATED_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "039",
+      "variant": "NOT_INTEGRATED",
+      "size_bytes": 139275,
+      "zip_entries": 82,
+      "manifest_count": 6,
+      "sha256": "f74702d138164d65295268329780e00e96cebf709980f456ad9cf997b4c3b6e9",
+      "filename": "EngineYT_Darts_S34_v039_DualLedgerRollbackResearch_SourceOnly_NOT_INTEGRATED_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "040",
+      "variant": "NOT_INTEGRATED",
+      "size_bytes": 165321,
+      "zip_entries": 99,
+      "manifest_count": 7,
+      "sha256": "7cb1b8c3ee16a5f123aa291e953b49b033d39a6b180a66170110bef6a3d97922",
+      "filename": "EngineYT_Darts_S34_v040_S31AdmissionChain_SourceOnly_NOT_INTEGRATED_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "041",
+      "variant": "NOT_INTEGRATED",
+      "size_bytes": 192082,
+      "zip_entries": 117,
+      "manifest_count": 8,
+      "sha256": "a1959b589fb66f36ad153ed72b6feb7990ef293062c02da85eb5382906eb1897",
+      "filename": "EngineYT_Darts_S34_v041_TerminalFailureBarrier_SourceOnly_NOT_INTEGRATED_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "042",
+      "variant": "NOT_INTEGRATED",
+      "size_bytes": 220677,
+      "zip_entries": 135,
+      "manifest_count": 9,
+      "sha256": "e687623d8a56fe65c118417daaef939b85e6bbbcdc625dc80d90177a177c5e1e",
+      "filename": "EngineYT_Darts_S34_v042_ExhaustiveTerminalCleanup_SourceOnly_NOT_INTEGRATED_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "043",
+      "variant": "NOT_INTEGRATED",
+      "size_bytes": 251703,
+      "zip_entries": 155,
+      "manifest_count": 10,
+      "sha256": "659db10b21ae0ef887a60263d20263cb4c15177848e995a2d490b324b94abf6d",
+      "filename": "EngineYT_Darts_S34_v043_NestedSQLiteCleanup_SourceOnly_NOT_INTEGRATED_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "044",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 10154,
+      "zip_entries": 7,
+      "manifest_count": 1,
+      "sha256": "dacaf05a77d884059ee848f04ef2c197e8ff9a08ee0d4d6400e65a0a6ed8dfc9",
+      "filename": "EngineYT_Darts_S34_v044_AuthenticParity_SourceOnly_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "045",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 13978,
+      "zip_entries": 8,
+      "manifest_count": 1,
+      "sha256": "9cdd2eb2cea5c72d2db6baaed4caeebb487dd22d504fde8e7590e900dbf87e49",
+      "filename": "EngineYT_Darts_S34_v045_AuthenticPublicHUDPort_SourceOnly_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "046",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 13239,
+      "zip_entries": 8,
+      "manifest_count": 1,
+      "sha256": "7e07cadcd69a9e9f3010292a3a52811fa8f670352a5e7f720cf58c2a9642868c",
+      "filename": "EngineYT_Darts_S34_v046_AuthenticCameraOverlayPort_SourceOnly_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "047",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 13550,
+      "zip_entries": 7,
+      "manifest_count": 1,
+      "sha256": "bd8956a5e4c13f26fea2b8fea65d3132ad0d099521a1b2f35436333b60ef56fa",
+      "filename": "EngineYT_Darts_S34_v047_AuthenticAudioMetadataPort_SourceOnly_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "048",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 22787,
+      "zip_entries": 15,
+      "manifest_count": 1,
+      "sha256": "9430c37dfb2f973056ad6aadd0b874fc476914fc53fab4a4d725df79dffdc9cc",
+      "filename": "EngineYT_Darts_S34_v048_CameraCallsite_SourceOnly_20261021.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "049",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 37620,
+      "zip_entries": 22,
+      "manifest_count": 1,
+      "sha256": "5fcb90c522b076d3f4c8f7bf13aab1655f692332890229bab22a57da95da3a91",
+      "filename": "EngineYT_Darts_S34_v049_SingleParseSemanticFanout_SourceOnly_PRIVATE.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "050",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 57960,
+      "zip_entries": 33,
+      "manifest_count": 2,
+      "sha256": "9eb7d85b8056e432f8f4ea986655e334e6d96dcc517ef2811f276fcf690c2034",
+      "filename": "EngineYT_Darts_S34_v050_HUDPaintCallsite_SourceOnly_PRIVATE.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "051",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 76324,
+      "zip_entries": 43,
+      "manifest_count": 3,
+      "sha256": "3c5b43f9c2dc54a2fd4e2924c28c0a92f77f839599febdb8689ebbe4a2dc502c",
+      "filename": "EngineYT_Darts_S34_v051_OverlayCallsite_SourceOnly_PRIVATE.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "052",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 100346,
+      "zip_entries": 55,
+      "manifest_count": 4,
+      "sha256": "f446f961f8f93730a7d431e86ebb0533cf02fe99582808cd332d9dc8a31063f9",
+      "filename": "EngineYT_Darts_S34_v052_AudioCallsite_SourceOnly_PRIVATE.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "053",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 123765,
+      "zip_entries": 66,
+      "manifest_count": 5,
+      "sha256": "05684c26768e19ed46b771be992672704dfc5886b23df476487003f344f50145",
+      "filename": "EngineYT_Darts_S34_v053_IndependentEpisodeSession_SourceOnly_PRIVATE.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "054",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 146777,
+      "zip_entries": 76,
+      "manifest_count": 6,
+      "sha256": "c1877e86179cb1d3e6ef5d69df62e0518b38aac04853742bac72d1c875bd9f5d",
+      "filename": "EngineYT_Darts_S34_v054_LiveSignedSubprocess_SourceOnly_PRIVATE.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "055",
+      "variant": "SOURCE_ONLY",
+      "size_bytes": 171747,
+      "zip_entries": 87,
+      "manifest_count": 7,
+      "sha256": "3d3e8b721b440362019cb5c025a2a20d7f51ad816ae27f6de6d56181a9304105",
+      "filename": "EngineYT_Darts_S34_v055_BoundedStdout_Integrated_SourceOnly_PRIVATE.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    },
+    {
+      "version": "055",
+      "variant": "REVIEW_ONLY",
+      "size_bytes": 3351,
+      "zip_entries": 3,
+      "manifest_count": 0,
+      "sha256": "feb35c690e126428642f306c67feec5ed879438085369ccd3d0b1fc63816e795",
+      "filename": "EngineYT_Darts_S34_v055_BoundedStdout_ReviewOnly_20261022.zip",
+      "crc": "PASS",
+      "safety_scan": "PASS"
+    }
+  ],
+  "edges": [
+    {
+      "parent_version": "049",
+      "child_version": "050",
+      "matched_member_bytes": 22,
+      "pass": true
+    },
+    {
+      "parent_version": "050",
+      "child_version": "051",
+      "matched_member_bytes": 33,
+      "pass": true
+    },
+    {
+      "parent_version": "051",
+      "child_version": "052",
+      "matched_member_bytes": 43,
+      "pass": true
+    },
+    {
+      "parent_version": "052",
+      "child_version": "053",
+      "matched_member_bytes": 55,
+      "pass": true
+    },
+    {
+      "parent_version": "053",
+      "child_version": "054",
+      "matched_member_bytes": 66,
+      "pass": true
+    },
+    {
+      "parent_version": "054",
+      "child_version": "055",
+      "matched_member_bytes": 76,
+      "pass": true
+    }
+  ],
+  "limitations": [
+    "This file stores a normalized summary, not the full raw log. Full report is anchored by its SHA-256 and must be retained for independent reproduction.",
+    "98 manifest files counted; manifest hash consistency is a separate static audit.",
+    "Package integrity does not prove author authenticity, Git ancestry, runtime behavior, rights or Policy B.",
+    "E5B4D_NO_GO; RENDER_NO_GO; PUBLISH_NO_GO"
+  ]
+}
