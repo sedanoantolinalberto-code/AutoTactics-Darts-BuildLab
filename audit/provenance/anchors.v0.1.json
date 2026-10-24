@@ -1,0 +1,72 @@
+{
+  "schema_version": "0.1.0",
+  "document_type": "darts_s34_provenance_registry",
+  "created_utc_date": "2026-10-24",
+  "policy": {
+    "scope": "documentary_only",
+    "model": "M",
+    "E5B4D": "STRICT_GUARANTEES_INCOMPATIBLE_UNDER_STATED_MODEL",
+    "execution": "NO_GO",
+    "render": "NO_GO",
+    "publish": "NO_GO",
+    "main_merge": "NOT_AUTHORIZED"
+  },
+  "source_classes": [
+    "OBSERVED_OWNER_TERMINAL",
+    "OBSERVED_GITHUB",
+    "DOCUMENTARY_REPORTED",
+    "STATIC_REPRODUCED",
+    "FUNCTIONAL_REPRODUCED",
+    "NOT_RUN",
+    "PROPOSED"
+  ],
+  "artifacts": [
+    {
+      "id": "darts_s34_v055_integrated",
+      "filename": "EngineYT_Darts_S34_v055_BoundedStdout_Integrated_SourceOnly_PRIVATE.zip",
+      "size_bytes": 171747,
+      "sha256": "3d3e8b721b440362019cb5c025a2a20d7f51ad816ae27f6de6d56181a9304105",
+      "entries": 87,
+      "source_class": "OBSERVED_OWNER_TERMINAL",
+      "observation": "Owner PowerShell output 2026-10-24",
+      "committed_to_repo": false,
+      "committed_to_repo_note": "Not established; false means no commit established by this audit, not proof of global absence"
+    },
+    {
+      "id": "darts_s34_v055_reviewonly",
+      "filename": "EngineYT_Darts_S34_v055_BoundedStdout_ReviewOnly_20261022.zip",
+      "size_bytes": 3351,
+      "sha256": "feb35c690e126428642f306c67feec5ed879438085369ccd3d0b1fc63816e795",
+      "entries": 3,
+      "source_class": "OBSERVED_OWNER_TERMINAL",
+      "observation": "Owner PowerShell output 2026-10-24"
+    }
+  ],
+  "git": {
+    "repository": "sedanoantolinalberto-code/AutoTactics-Darts-BuildLab",
+    "default_branch": "main",
+    "base_commit": "0a01e6ffd2d75777db716180a072219cb904fc4b",
+    "audit_branch": "audit/darts-s34-provenance-20261024",
+    "source_class": "OBSERVED_GITHUB"
+  },
+  "reported_not_reproduced_here": {
+    "s34_zip_crc": "25/25",
+    "manifest_checks": "98/98",
+    "manifest_file_references": 4605,
+    "byte_identical_nested_versions": [
+      "v0.49->v0.50",
+      "v0.50->v0.51",
+      "v0.51->v0.52",
+      "v0.52->v0.53",
+      "v0.53->v0.54",
+      "v0.54->v0.55"
+    ],
+    "source_class": "DOCUMENTARY_REPORTED"
+  },
+  "tests": {
+    "sec02_windows": "NOT_RUN",
+    "policy_b_under_model_m": "NO_GO",
+    "frames_912_windows": "NOT_RUN"
+  },
+  "integrity_semantics": "SHA256 equality establishes byte identity to a stated reference only, not origin authenticity or operational safety."
+}
