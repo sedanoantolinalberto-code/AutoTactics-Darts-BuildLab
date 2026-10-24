@@ -66,3 +66,22 @@ A Windows ACL or AppContainer denial in one synthetic case may mitigate SEC-02, 
 - [ ] Separate Git commit ancestry from ZIP containment relations.
 - [ ] Review complete file inventory for sensitive content before any upload.
 - [ ] Require human gate review before any merge or release.
+
+## Audit navigation (2026-10-24)
+
+Use this index to locate the relevant evidence without treating documentary commits as gate approvals.
+
+| Question | Source | Evidence status |
+|---|---|---|
+| Which original ZIPs were hashed? | [25-ZIP anchors](s34-25-zip-anchors.v1.json), [static audit record](RUN-20261024-STATIC.md) | STATIC_REPRODUCED; raw inputs externally retained |
+| Why do v0.37–v0.43 root READMEs mention v0.36? | [Archive lines](DOC-README-01-ARCHIVE-LINES.md) | STATIC_REPRODUCED |
+| What are the external S31/v0.34 anchors? | [External anchors](P1-DEPENDENCY-03-EXTERNAL-ANCHORS.md) | STATIC_REPRODUCED |
+| Are v0.35–v0.43 and v0.44–v0.55 identical implementations? | [Static AST graph](P1-GRAPH-04-STATIC-AST.md) | STATIC_REPRODUCED, limited |
+| Which modules can the v0.55 worker import? | [Worker reachability](P1-IMPORT-08-WORKER-REACHABILITY.md) | STATIC_REPRODUCED, not dynamic |
+| What external Python dependencies are specified? | [Dependency inventory](P1-DEP-10-THIRD-PARTY-REPRODUCIBILITY.md) | STATIC_REPRODUCED |
+| Does ACK prove application? | [ACK trust-boundary analysis](../security/P0-ACK-12-TRUST-BOUNDARY.md) | STATIC_REASONING_ONLY |
+| What process and byte limits remain unproven? | [Lifecycle obligations](../security/P0-TERM-06-LIFECYCLE-PROOF-OBLIGATIONS.md) | STATIC SOURCE REVIEW |
+| What do the nine fake-worker tests establish? | [Independent test coverage](../security/P0-TEST-11-INDEPENDENT-COVERAGE.md) | STATIC_REPRODUCED; tests NOT_RUN here |
+| What patches are proposed? | [Unapplied hardening diffs](../security/P0-HARDENING-09-PROPOSED-DIFFS.md) | PROPOSED_NOT_APPLIED |
+| What exact evidence would allow gate decisions? | [Acceptance contract](../decisions/GATE-13-EVIDENCE-ACCEPTANCE-CONTRACT.md) | PROPOSED_ACCEPTANCE_CRITERIA |
+| Why is functional execution still blocked? | [Model M ADR](../decisions/ADR-P0-001-MODEL-M.md) | FROZEN_NO_GO |
