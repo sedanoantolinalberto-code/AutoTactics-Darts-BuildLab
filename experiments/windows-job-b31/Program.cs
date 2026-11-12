@@ -8,6 +8,7 @@ using System.Text;
 using System.IO;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 internal static class Program
 {
@@ -540,6 +541,41 @@ internal static class Program
         }
     }
 
+    private static void TestConcurrentIndependentJobLifetimes()
+    {
+        // Separate Job handles and process handles per worker; never enumerate
+        // or terminate processes belonging to another test. The scenario
+        // verifies there is no accidental shared process-custody state.
+        const int workers = 6;
+        using var launch = new ManualResetEventSlim(false);
+        Task[] tasks = new Task[workers];
+        for (int index = 0; index < workers; index++)
+        {
+            int slot = index;
+            tasks[index] = Task.Run(() =>
+            {
+                IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
+                PROCESS_INFORMATION pi = default;
+                try
+                {
+                    launch.Wait();
+                    job = CreateConfiguredJob();
+                    pi = LaunchAtomic(job);
+                    CheckWin(IsProcessInJob(pi.hProcess, job, out bool inside),
+                        "IsProcessInJob(concurrent)");
+                    Check(inside, "Concurrent Job association missing for worker " + slot);
+                    Resume(pi);
+                    CloseJob(ref job);
+                    Check(WaitForSingleObject(pi.hProcess, 15000) == WaitObject0,
+                        "Concurrent Job failed to terminate owned child " + slot);
+                }
+                finally { DisposeOwned(ref job, ref duplicate, ref pi); }
+            });
+        }
+        launch.Set();
+        Task.WaitAll(tasks);
+    }
+
     private static void TestRepeatedAtomicCreationAndClose()
     {
         const int repetitions = 20;
@@ -766,7 +802,8 @@ internal static class Program
             ("inheritable-job-handle-cannot-leak-with-inherit-false", TestInheritableJobHandleDoesNotLeakViaAtomicLaunch),
             ("invalid-job-handle-fail-closed", TestInvalidJobHandleFailsClosed),
             ("forged-pid-marker-never-targets-unrelated-process", TestUntrustedMarkerPidCannotTargetUnrelatedProcess),
-            ("named-job-collision-rejected", TestNamedJobNameCollisionFailsClosed)
+            ("named-job-collision-rejected", TestNamedJobNameCollisionFailsClosed),
+            ("six-concurrent-independent-jobs", TestConcurrentIndependentJobLifetimes)
         };
         int passed = 0;
         foreach (var (name, action) in checks)
