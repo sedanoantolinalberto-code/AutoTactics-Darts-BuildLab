@@ -89,6 +89,16 @@ def _read_verified_log(root: Path, name: str, expected_hash: str) -> bytes | Non
             os.close(dir_fd)
 
 
+def _unique_json_pairs(pairs):
+    """Reject duplicate JSON keys instead of trusting the last value."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("DUPLICATE_JSON_KEY")
+        result[key] = value
+    return result
+
+
 def _derive_counts_from_jsonl(raw: bytes, expected: int) -> dict | None:
     """Require exactly one unambiguous record for every unique case id."""
     if not raw or not raw.endswith(b"\n") or b"\r" in raw or b"\x00" in raw:
@@ -102,7 +112,7 @@ def _derive_counts_from_jsonl(raw: bytes, expected: int) -> dict | None:
         if not line or len(line) > 4096:
             return None
         try:
-            item = json.loads(line.decode("utf-8"))
+            item = json.loads(line.decode("utf-8"), object_pairs_hook=_unique_json_pairs)
         except (UnicodeError, ValueError, json.JSONDecodeError):
             return None
         if not isinstance(item, dict) or set(item) != {"schema", "case_id", "status"}:
