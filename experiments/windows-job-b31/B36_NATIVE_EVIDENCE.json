@@ -1,0 +1,56 @@
+{
+  "schema": "engineyt-windows-job-probe-B36-evidence/0.1",
+  "classification": "REVIEW_ONLY_NOT_GATE_V8",
+  "branch": "review/windows-joblist-native-probe-b31-20261112",
+  "test_code_commit": "d1483edab01c8e373d1cd85d4cc772bf6fe18ac8",
+  "test_run_id": 43147759478,
+  "environments": [
+    {
+      "runner": "windows-2022",
+      "job_id": 130949476989,
+      "scenarios": 13,
+      "passed": 13,
+      "failed": 0,
+      "conclusion": "success"
+    },
+    {
+      "runner": "windows-2025",
+      "job_id": 130949477333,
+      "scenarios": 13,
+      "passed": 13,
+      "failed": 0,
+      "conclusion": "success"
+    }
+  ],
+  "unique_scenarios": 13,
+  "scenario_executions_total": 26,
+  "scenario_names": [
+    "configuration-and-job-handle-inheritance",
+    "atomic-job-list-and-kill-on-last-close",
+    "duplicated-job-handle-lifetime",
+    "invalid-executable-fail-closed",
+    "suspended-child-killed-before-resume",
+    "descendant-after-parent-exit-killed-by-job",
+    "abrupt-custodian-death-kills-owned-child",
+    "explicit-breakaway-denied-by-job-policy",
+    "twenty-atomic-creation-close-repetitions",
+    "inheritable-job-handle-cannot-leak-with-inherit-false",
+    "invalid-job-handle-fail-closed",
+    "forged-pid-marker-never-targets-unrelated-process",
+    "named-job-collision-rejected"
+  ],
+  "original_gate_v8_cases_executed": 0,
+  "source_type": "Native Windows x64 .NET 8 disposable Job Object laboratory",
+  "evidence_method": "GitHub Actions job conclusions plus stdout B31_RESULT per runner were inspected",
+  "not_established": [
+    "Original Python supervisor B23-B25 behavior",
+    "Full descendant custody under combined failures",
+    "Authenticity of PID marker in production",
+    "Native desktop Windows 10/11 qualification"
+  ],
+  "r17_e5b4d": "NO-GO",
+  "tb09_g3": "BLOCKED",
+  "rendering_go": false,
+  "publishing_go": false,
+  "production_integrated": false
+}
