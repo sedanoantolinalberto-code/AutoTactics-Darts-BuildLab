@@ -191,6 +191,12 @@ def evaluate(doc: object, log_root: Path) -> dict:
         status = "COMPLETE_LOCAL_BATCHED_UNQUALIFIED_PASS"
     if doc["evidence_kind"] == "SYNTHETIC_POLICY_TEST":
         status = "SYNTHETIC_" + status
+    else:
+        # The receipt and log are controlled by the same source. Even perfect
+        # per-case consistency cannot establish independent test provenance.
+        # Native qualification needs an external, separately authenticated
+        # executor identity and attestation not available in this lab.
+        status = "BLOCKED_UNATTESTED_NATIVE_PROVENANCE"
 
     return {"status": status, "reason": None, "counts": totals,
             "evidence_kind": doc["evidence_kind"],
