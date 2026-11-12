@@ -37,6 +37,33 @@
       "errors": 0,
       "skipped": 0,
       "conclusion": "success"
+    },
+    {
+      "run_id": 43145127555,
+      "job_id": 130941059554,
+      "scope": "reference tests plus native PDEATHSIG fork/UID-drop counterexamples",
+      "tests": 127,
+      "passed": 127,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success",
+      "uid_breakdown": [
+        {
+          "uid": 1001,
+          "reference": 41,
+          "kernel": 1
+        },
+        {
+          "uid": 0,
+          "reference": 41,
+          "kernel": 2
+        },
+        {
+          "uid": 65534,
+          "reference": 41,
+          "kernel": 1
+        }
+      ]
     }
   ],
   "sources": [
@@ -45,7 +72,7 @@
     "experiments/r09-linux-closure/matrix_policy.py",
     "experiments/r09-linux-closure/test_matrix_policy.py"
   ],
-  "last_test_commit": "158081f26f2df7d15729544f6a0c7bdc4a17e2ae",
+  "last_test_commit": "b9ac5669b69e339f7018b3690b3f6111edd0e6fb",
   "actual_seccomp_kernel_denial_observed": true,
   "test_cases_per_uid": {
     "reference_launcher": 15,
@@ -61,5 +88,8 @@
   "rendering_go": false,
   "publishing_go": false,
   "production_integrated": false,
-  "explicit_caveat": "Test observations pertain only to a reference lab; Claudes local R09 commits and T21 packages were not in this GitHub branch."
+  "explicit_caveat": "Test observations pertain only to a reference lab; Claudes local R09 commits and T21 packages were not in this GitHub branch.",
+  "native_pdeathsig_fork_noninheritance_observed": true,
+  "native_pdeathsig_uid_drop_clears_observed": true,
+  "external_custodian_qualified": false
 }
