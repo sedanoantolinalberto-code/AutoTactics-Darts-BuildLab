@@ -37,6 +37,7 @@ def observe(disable_privileges: bool) -> str:
     """Execute in controlled short-lived child; report before:after."""
     readfd, writefd = os.pipe2(os.O_CLOEXEC)
     pid = os.fork()
+    reaped = False
     if pid == 0:
         os.close(readfd)
         try:
@@ -66,18 +67,22 @@ def observe(disable_privileges: bool) -> str:
             raise TimeoutError("no native PDEATHSIG observation")
         message = os.read(readfd, 100).decode("ascii")
         waitpid, status = os.waitpid(pid, 0)
+        reaped = True
         if waitpid != pid or not os.WIFEXITED(status) or os.WEXITSTATUS(status) != 0:
             raise AssertionError("owned laboratory child did not exit normally")
         return message
     finally:
-        try:
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        try:
-            os.waitpid(pid, os.WNOHANG)
-        except ChildProcessError:
-            pass
+        if not reaped:
+            # A child that has not been reaped still reserves its PID;
+            # after successful waitpid we must not signal a reused PID.
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                os.waitpid(pid, 0)
+            except ChildProcessError:
+                pass
         os.close(readfd)
 
 
