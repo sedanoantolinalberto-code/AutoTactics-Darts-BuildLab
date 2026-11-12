@@ -142,6 +142,9 @@ internal static class Program
     private static extern bool GetHandleInformation(IntPtr handle, out uint flags);
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool CloseHandle(IntPtr handle);
 
     private static void Check(bool condition, string message)
@@ -405,6 +408,53 @@ internal static class Program
         }
     }
 
+    private static void TestInheritableJobHandleDoesNotLeakViaAtomicLaunch()
+    {
+        // A deliberately inheritable Job handle is the adversarial fixture.
+        // The production-like launcher must force bInheritHandles=false.
+        IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
+        PROCESS_INFORMATION pi = default;
+        try
+        {
+            job = CreateConfiguredJob();
+            CheckWin(SetHandleInformation(job, 1u, 1u), "SetHandleInformation");
+            CheckWin(GetHandleInformation(job, out uint flags), "GetHandleInformation");
+            Check((flags & 1u) != 0, "Adversarial fixture did not mark handle inheritable");
+            pi = LaunchAtomic(job); // bInheritHandles is hardcoded false.
+            CheckWin(IsProcessInJob(pi.hProcess, job, out bool inside), "IsProcessInJob");
+            Check(inside, "Atomic launcher lost membership");
+            Resume(pi);
+            CloseJob(ref job);
+            Check(WaitForSingleObject(pi.hProcess, 10000) == WaitObject0,
+                "Job handle inherited despite bInheritHandles=false");
+        }
+        finally { DisposeOwned(ref job, ref duplicate, ref pi); }
+    }
+
+    private static void TestInvalidJobHandleFailsClosed()
+    {
+        // -1 is a process pseudo-handle, never a valid Job Object handle.
+        // Reject without creating an unsupervised disposable child.
+        IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
+        PROCESS_INFORMATION pi = default;
+        bool rejected = false;
+        try
+        {
+            try
+            {
+                var created = TryCreateAtomic(new IntPtr(-1), PowerShellPath());
+                pi = created.process;
+                rejected = !created.created && created.error != 0;
+            }
+            catch (Win32Exception error)
+            {
+                rejected = error.NativeErrorCode != 0;
+            }
+            Check(rejected, "Invalid Job handle was unexpectedly accepted");
+        }
+        finally { DisposeOwned(ref job, ref duplicate, ref pi); }
+    }
+
     private static void TestRepeatedAtomicCreationAndClose()
     {
         const int repetitions = 20;
@@ -607,7 +657,9 @@ internal static class Program
             ("descendant-after-parent-exit-killed-by-job", TestGrandchildAfterParentExit),
             ("abrupt-custodian-death-kills-owned-child", TestAbruptCustodianTermination),
             ("explicit-breakaway-denied-by-job-policy", TestDisallowedBreakaway),
-            ("twenty-atomic-creation-close-repetitions", TestRepeatedAtomicCreationAndClose)
+            ("twenty-atomic-creation-close-repetitions", TestRepeatedAtomicCreationAndClose),
+            ("inheritable-job-handle-cannot-leak-with-inherit-false", TestInheritableJobHandleDoesNotLeakViaAtomicLaunch),
+            ("invalid-job-handle-fail-closed", TestInvalidJobHandleFailsClosed)
         };
         int passed = 0;
         foreach (var (name, action) in checks)
