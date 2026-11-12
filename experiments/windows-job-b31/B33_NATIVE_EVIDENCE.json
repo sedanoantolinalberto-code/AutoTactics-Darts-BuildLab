@@ -1,0 +1,35 @@
+{
+  "schema": "engineyt-windows-job-probe-b33-evidence/0.1",
+  "classification": "REVIEW_ONLY_NOT_GATE_V8",
+  "branch": "review/windows-joblist-native-probe-b31-20261112",
+  "tested_commit": "b9a86f45771ccfb4c8307500ae96672637476bf4",
+  "github_actions": {
+    "run_id": 43141038835,
+    "job_id": 130927798701,
+    "platform": "windows-2022",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "tests": {
+    "total": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "within_test_serial_job_cycles": 20
+  },
+  "new_cases": [
+    "explicit-breakaway-denied-by-job-policy",
+    "twenty-atomic-creation-close-repetitions"
+  ],
+  "original_v8_cases_executed": 0,
+  "r17_e5b4d": "NO-GO",
+  "tb09_g3": "BLOCKED",
+  "rendering_go": false,
+  "publishing_go": false,
+  "limitations": [
+    "Separate C# reference prototype not original Python B23-B25 supervisor",
+    "Native reference 9/9 does not imply original Gate V8 17/17",
+    "No root Linux/cgroups validation",
+    "No production integration, merge or release"
+  ]
+}
