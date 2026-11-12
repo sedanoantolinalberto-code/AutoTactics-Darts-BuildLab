@@ -1,0 +1,47 @@
+{
+  "schema": "engineyt-windows-jobobjects-reviewonly-evidence/0.1",
+  "classification": "REVIEW_ONLY_NOT_GATE_V8",
+  "branch": "review/windows-joblist-native-probe-b31-20261112",
+  "test_commit": "3b40d22a822662c092c19307d3868dff0cd04854",
+  "runs": [
+    {
+      "run_id": 43136560568,
+      "job_id": 130913203266,
+      "scenarios": 4,
+      "passed": 4,
+      "failed": 0,
+      "conclusion": "success"
+    },
+    {
+      "run_id": 43136982647,
+      "job_id": 130914574856,
+      "scenarios": 7,
+      "passed": 7,
+      "failed": 0,
+      "conclusion": "success"
+    }
+  ],
+  "host": "GitHub Actions windows-2022 x64, .NET 8",
+  "case_names": [
+    "configuration-and-job-handle-inheritance",
+    "atomic-job-list-and-kill-on-last-close",
+    "duplicated-job-handle-lifetime",
+    "invalid-executable-fail-closed",
+    "suspended-child-killed-before-resume",
+    "descendant-after-parent-exit-killed-by-job",
+    "abrupt-custodian-death-kills-owned-child"
+  ],
+  "original_gate_v8_cases_executed": 0,
+  "r17_e5b4d": "NO-GO",
+  "tb09_g3": "BLOCKED",
+  "rendering_go": false,
+  "publishing_go": false,
+  "production_integrated": false,
+  "provenance": "GitHub Actions stdout and job conclusion inspected in this session",
+  "limitations": [
+    "This validates a new reference prototype, not B23-B25 native module",
+    "No real supervisor stress qualification",
+    "No Linux delegated cgroup qualification",
+    "No main merge or release"
+  ]
+}
