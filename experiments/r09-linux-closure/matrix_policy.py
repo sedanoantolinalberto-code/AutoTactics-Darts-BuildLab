@@ -9,6 +9,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import stat
 from pathlib import Path
 
 SCHEMA = "engineyt-r09-suite-receipts/0.1"
@@ -18,23 +20,64 @@ ROOT_UID = 0
 UNPRIV_UID = 65534
 
 def _safe_log(root: Path, name: str, expected_hash: str) -> bool:
+    """Hash only a regular file from a pinned fd under a trusted log root.
+
+    O_NOFOLLOW, O_NONBLOCK, dir_fd traversal and fstat prevent the final
+    pathname from being re-opened as a blocking FIFO after validation.
+    This is a receipt/log integrity helper, NOT an isolation boundary.
+    """
     if not isinstance(name, str) or not name or Path(name).is_absolute():
         return False
     if not isinstance(expected_hash, str) or len(expected_hash) != 64:
         return False
     if any(c not in "0123456789abcdef" for c in expected_hash):
         return False
-    try:
-        root_abs = root.resolve(strict=True)
-        p = (root_abs / name).resolve(strict=True)
-        if not p.is_relative_to(root_abs) or not p.is_file():
-            return False
-        # Evidence is bounded. The files are logs, not streaming/large bundles.
-        if p.stat().st_size > 2_000_000:
-            return False
-        return hashlib.sha256(p.read_bytes()).hexdigest() == expected_hash
-    except (OSError, ValueError, RuntimeError):
+    if "\\" in name or "\x00" in name:
         return False
+    parts = name.split("/")
+    if any(part in ("", ".", "..") for part in parts):
+        return False
+
+    dir_fd = -1
+    file_fd = -1
+    try:
+        directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW
+        dir_fd = os.open(root, directory_flags)
+        for component in parts[:-1]:
+            next_fd = os.open(component, directory_flags, dir_fd=dir_fd)
+            os.close(dir_fd)
+            dir_fd = next_fd
+        file_fd = os.open(parts[-1], os.O_RDONLY | os.O_NONBLOCK |
+                          os.O_CLOEXEC | os.O_NOFOLLOW, dir_fd=dir_fd)
+        initial = os.fstat(file_fd)
+        if not stat.S_ISREG(initial.st_mode) or initial.st_size > 2_000_000:
+            return False
+
+        digest = hashlib.sha256()
+        total = 0
+        while True:
+            block = os.read(file_fd, min(65536, 2_000_001 - total))
+            if not block:
+                break
+            total += len(block)
+            if total > 2_000_000:
+                return False
+            digest.update(block)
+        final = os.fstat(file_fd)
+        if (final.st_ino != initial.st_ino or
+            final.st_dev != initial.st_dev or
+            final.st_size != initial.st_size or
+            final.st_mtime_ns != initial.st_mtime_ns or
+            final.st_ctime_ns != initial.st_ctime_ns):
+            return False
+        return digest.hexdigest() == expected_hash
+    except (OSError, ValueError, RuntimeError, OverflowError):
+        return False
+    finally:
+        if file_fd >= 0:
+            os.close(file_fd)
+        if dir_fd >= 0:
+            os.close(dir_fd)
 
 
 def evaluate(doc: object, log_root: Path) -> dict:
