@@ -120,6 +120,34 @@
         }
       ],
       "qualifier": "Test count includes synthetic policy fixtures; not original T21-R09"
+    },
+    {
+      "run_id": 43150302615,
+      "job_id": 130957625846,
+      "scope": "PR16 F1+F2 plus duplicate JSON keys and fail-closed unauthenticated native provenance",
+      "tests": 175,
+      "passed": 175,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success",
+      "uid_breakdown": [
+        {
+          "uid": 1001,
+          "reference": 57,
+          "kernel": 1
+        },
+        {
+          "uid": 0,
+          "reference": 57,
+          "kernel": 2
+        },
+        {
+          "uid": 65534,
+          "reference": 57,
+          "kernel": 1
+        }
+      ],
+      "qualification": "REFERENCE_ONLY; mixed synthetic policies and isolated native launch tests"
     }
   ],
   "sources": [
@@ -128,7 +156,7 @@
     "experiments/r09-linux-closure/matrix_policy.py",
     "experiments/r09-linux-closure/test_matrix_policy.py"
   ],
-  "last_test_commit": "df88a43c1f60c46103c2cd10a5fbc4e309c3a6fe",
+  "last_test_commit": "3717beb907f88aa62cb5e4cfb991ec63d26b3ad4",
   "actual_seccomp_kernel_denial_observed": true,
   "test_cases_per_uid": {
     "reference_launcher": 15,
@@ -154,9 +182,11 @@
   "test_result_log_schema": "engineyt-r09-case-result/0.1",
   "latest_per_uid": {
     "reference_launcher": 18,
-    "synthetic_matrix": 38,
-    "reference_total": 56
+    "synthetic_matrix": 39,
+    "reference_total": 57
   },
   "source_provenance_authenticated": false,
-  "skip_selection_note": "127/127 run selected one native kernel fork test for UID 65534 and did NOT run root-only uid-drop test under UID 65534. Claude independently ran the complete kernel class under UID 65534, yielding one expected SKIP; these are different test selections."
+  "skip_selection_note": "127/127 run selected one native kernel fork test for UID 65534 and did NOT run root-only uid-drop test under UID 65534. Claude independently ran the complete kernel class under UID 65534, yielding one expected SKIP; these are different test selections.",
+  "duplicate_json_fields_rejected": true,
+  "unattested_native_result_cannot_pass": true
 }
