@@ -1,0 +1,79 @@
+name: EngineYT B40 original V8 reproducibility x5 (review only)
+
+on:
+  push:
+    branches:
+      - review/windows-gate-v8-repeat-b40-20261112
+  pull_request:
+    branches:
+      - review/windows-gate-v8-handle-fix-b39-20261112
+
+permissions:
+  contents: read
+
+jobs:
+  native-v8-repeat:
+    if: github.event_name == 'push' || github.head_ref == 'review/windows-gate-v8-repeat-b40-20261112'
+    runs-on: ${{ matrix.windows }}
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        windows: [windows-2022, windows-2025]
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+          architecture: x64
+      - name: Reconstruct and verify original payload, then apply one-function B39
+        run: |
+          python experiments/windows-gate-v8-original/extract_exact_sources.py
+          if ($LASTEXITCODE -ne 0) { exit 2 }
+          python experiments/windows-gate-v8-original/apply_b39_handle_fix.py
+          if ($LASTEXITCODE -ne 0) { exit 2 }
+          Copy-Item experiments/windows-gate-v8-original/verify_windows_v8_evidence.py experiments/windows-gate-v8-original/native/verify_windows_v8_evidence.py
+          cd experiments/windows-gate-v8-original/native
+          python -c "import ctypes;from windows_joblist_launcher import _handle_value;assert _handle_value(ctypes.c_void_p())==0"
+          if ($LASTEXITCODE -ne 0) { exit 2 }
+          python --version
+          git rev-parse HEAD
+      - name: Five independent native V8 and B25 runs on each Windows host
+        run: |
+          $ErrorActionPreference = "Continue"
+          cd experiments/windows-gate-v8-original/native
+          New-Item -ItemType Directory -Force b40_evidence | Out-Null
+          for ($round = 1; $round -le 5; $round++) {
+            $log = "b40_evidence/v8_round_$round.log"
+            $json = "b40_evidence/v8_round_$round.json"
+            $verification = "b40_evidence/b25_round_$round.log"
+            python -c "import windows_gate_v8,sys;sys.exit(windows_gate_v8.main())" *> $log
+            $gateExit = $LASTEXITCODE
+            if (Test-Path ./windows_gate_v8_result.json) {
+              Move-Item -Force ./windows_gate_v8_result.json $json
+              python ./verify_windows_v8_evidence.py $json --source-dir . *> $verification
+              $verifyExit = $LASTEXITCODE
+            } else {
+              $verifyExit = 2
+              "BLOCKED_MISSING_NATIVE_REPORT" | Set-Content $verification
+            }
+            Get-Content $log | Select-Object -Last 7
+            Get-Content $verification
+            Write-Output "B40_ROUND=$round GATE_EXIT=$gateExit B25_EXIT=$verifyExit"
+            if ($gateExit -ne 0 -or $verifyExit -ne 0) { exit 1 }
+          }
+          python -c "import pathlib,json;files=sorted(pathlib.Path('b40_evidence').glob('v8_round_*.json'));assert len(files)==5;rows=[json.loads(p.read_text()) for p in files];assert all(r['pass'] is True and r['total']==17 and r['passed']==17 and r['failures']==0 and r['errors']==0 and r['skipped']==0 and r['test_filesystem']=='NTFS' for r in rows);print('B40_5_ROUNDS_85_CASES_PASS_WITH_B25')"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Preserve complete per-round evidence regardless of outcome
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineyt-b40-v8-${{ matrix.windows }}-${{ github.sha }}
+          path: experiments/windows-gate-v8-original/native/b40_evidence/
+          if-no-files-found: warn
+          retention-days: 30
