@@ -17,6 +17,7 @@ internal static class Program
     private const uint ExtendedStartupInfoPresent = 0x00080000;
     private const uint CreateSuspended = 0x00000004;
     private const uint CreateNoWindow = 0x08000000;
+    private const uint CreateBreakawayFromJob = 0x01000000;
     private const uint WaitObject0 = 0;
     private const uint WaitTimeout = 258;
     private const uint DuplicateSameAccess = 2;
@@ -329,6 +330,103 @@ internal static class Program
     }
 
 
+    private static string ReadMarkerText(string path, int milliseconds = 10000)
+    {
+        var watch = Stopwatch.StartNew();
+        while (watch.ElapsedMilliseconds < milliseconds)
+        {
+            if (File.Exists(path))
+            {
+                string value = File.ReadAllText(path).Trim();
+                if (value.Length > 0) return value;
+            }
+            Thread.Sleep(40);
+        }
+        throw new TimeoutException("Disposable worker did not provide a marker");
+    }
+
+    private static int RunDisallowedBreakawayWorker(string marker)
+    {
+        // This worker runs inside a newly configured Job without BREAKAWAY_OK.
+        // The only process requested is a disposable sleeping PowerShell child.
+        PROCESS_INFORMATION child = default;
+        try
+        {
+            var startup = new STARTUPINFOEX();
+            startup.StartupInfo.cb = (uint)Marshal.SizeOf<STARTUPINFO>();
+            string application = PowerShellPath();
+            var args = new StringBuilder("\"" + application +
+                "\" -NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 60\"");
+            bool created = CreateProcess(application, args,
+                IntPtr.Zero, IntPtr.Zero, false,
+                CreateBreakawayFromJob | CreateNoWindow,
+                IntPtr.Zero, null, ref startup, out child);
+            int error = created ? 0 : Marshal.GetLastWin32Error();
+            File.WriteAllText(marker, created
+                ? "UNEXPECTED_BREAKAWAY_CREATED"
+                : "BREAKAWAY_DENIED_" + error.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            return created ? 3 : 0;
+        }
+        finally
+        {
+            if (child.hProcess != IntPtr.Zero)
+            {
+                TerminateProcess(child.hProcess, 1);
+                WaitForSingleObject(child.hProcess, 5000);
+                CloseHandle(child.hProcess);
+            }
+            if (child.hThread != IntPtr.Zero) CloseHandle(child.hThread);
+        }
+    }
+
+    private static void TestDisallowedBreakaway()
+    {
+        IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
+        PROCESS_INFORMATION pi = default;
+        string marker = NewMarker();
+        try
+        {
+            job = CreateConfiguredJob();
+            var launched = TryCreateAtomic(job, OwnExecutablePath(),
+                "--worker-breakaway \"" + marker + "\"");
+            if (!launched.created) throw new Win32Exception(launched.error, "CreateProcessW(breakaway worker)");
+            pi = launched.process;
+            Resume(pi);
+            string result = ReadMarkerText(marker);
+            Check(result.StartsWith("BREAKAWAY_DENIED_", StringComparison.Ordinal),
+                "Disallowed CREATE_BREAKAWAY_FROM_JOB unexpectedly succeeded: " + result);
+            Check(WaitForSingleObject(pi.hProcess, 10000) == WaitObject0,
+                "Breakaway worker did not terminate after reporting denial");
+        }
+        finally
+        {
+            DisposeOwned(ref job, ref duplicate, ref pi);
+            if (File.Exists(marker)) File.Delete(marker);
+        }
+    }
+
+    private static void TestRepeatedAtomicCreationAndClose()
+    {
+        const int repetitions = 20;
+        for (int i = 0; i < repetitions; i++)
+        {
+            IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
+            PROCESS_INFORMATION pi = default;
+            try
+            {
+                job = CreateConfiguredJob();
+                pi = LaunchAtomic(job);
+                CheckWin(IsProcessInJob(pi.hProcess, job, out bool inside), "IsProcessInJob");
+                Check(inside, "Atomic Job membership missing in iteration " + i);
+                Resume(pi);
+                CloseJob(ref job);
+                Check(WaitForSingleObject(pi.hProcess, 10000) == WaitObject0,
+                    "A Job child survived last-handle close in iteration " + i);
+            }
+            finally { DisposeOwned(ref job, ref duplicate, ref pi); }
+        }
+    }
+
     private static string OwnExecutablePath()
     {
         string? path = Environment.ProcessPath;
@@ -495,6 +593,7 @@ internal static class Program
     public static int Main(string[] args)
     {
         if (args.Length == 2 && args[0] == "--worker-descendant") return RunDescendantWorker(args[1]);
+        if (args.Length == 2 && args[0] == "--worker-breakaway") return RunDisallowedBreakawayWorker(args[1]);
         if (args.Length == 2 && args[0] == "--custodian") return RunCustodian(args[1]);
         if (!OperatingSystem.IsWindows()) { Console.Error.WriteLine("BLOCKED: Windows native required"); return 2; }
         if (IntPtr.Size != 8) { Console.Error.WriteLine("BLOCKED: 64-bit runner required"); return 2; }
@@ -506,7 +605,9 @@ internal static class Program
             ("invalid-executable-fail-closed", TestInvalidExecutableFailsClosed),
             ("suspended-child-killed-before-resume", TestKillWhileStillSuspended),
             ("descendant-after-parent-exit-killed-by-job", TestGrandchildAfterParentExit),
-            ("abrupt-custodian-death-kills-owned-child", TestAbruptCustodianTermination)
+            ("abrupt-custodian-death-kills-owned-child", TestAbruptCustodianTermination),
+            ("explicit-breakaway-denied-by-job-policy", TestDisallowedBreakaway),
+            ("twenty-atomic-creation-close-repetitions", TestRepeatedAtomicCreationAndClose)
         };
         int passed = 0;
         foreach (var (name, action) in checks)
