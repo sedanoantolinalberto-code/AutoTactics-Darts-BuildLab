@@ -54,3 +54,48 @@ Verified GitHub Actions: run `43141038835`, job `130927798701`, test commit `b9a
 Evidence interpretation: **9/9 independent reference scenarios**, including 20 repetitions within one scenario, **not 29 separate test scenarios**. The 17 original B23–B25 Gate V8 scenarios remain **0/17 executed** and the original supervisor is not qualified by these reference tests.
 
 No code changes outside this review-only branch; no release, render or publish permission.
+
+
+## B34–B36 — identity and handle hardening, 12 November 2026
+
+All changes are limited to this disposable Windows reference experiment.
+
+- **B34**: a Job handle deliberately marked inheritable does not cross
+  \`CreateProcessW\` when \`bInheritHandles=false\`. An invalid Job handle
+  causes launch rejection, not successful unsupervised execution.
+- **B35**: a PID read from a marker file is **not authorization to terminate
+  the process**. The verifier opens the intended Job and requires
+  \`IsProcessInJob(candidate, expectedJob)\` before keeping a
+  termination-capable process handle. A separate test supplies the PID of an
+  unrelated, directly owned control process; the verifier rejects it without
+  killing the control. The verifier's extra Job handle is closed **before**
+  the custodian is killed, so it cannot mask \`KILL_ON_JOB_CLOSE\` behavior.
+- **B36**: a named Job that already exists causes a fail-closed rejection.
+  The test deliberately reuses a newly generated name and requires denial.
+- A matrix now runs the entire suite on **windows-2022** and
+  **windows-2025**, both with x64 and .NET 8.
+
+### Evidence
+
+- 11-scenario baseline B34 on both versions: GitHub Actions
+  \`43147146817\`, **11/11 PASS** in each job.
+- Final B36 source commit: \`d1483edab01c8e373d1cd85d4cc772bf6fe18ac8\`.
+- GitHub Actions run \`43147759478\`: Windows 2022 job
+  \`130949476989\`, **13/13 PASS**; Windows 2025 job \`130949477333\`,
+  **13/13 PASS**. Both completed SUCCESS with 0 FAIL.
+- **13 distinct scenarios**, executed once on each platform
+  (**26 successful scenario executions**). The 20 inner repetitions of one
+  scenario do not increase the scenario count.
+- Structured receipt: \`B36_NATIVE_EVIDENCE.json\`.
+
+### Qualification boundaries
+
+These tests do **not** establish authenticated or tamper-proof origin of a
+marker in production; they reject a PID outside a named Job in this test
+harness. Named Job security descriptors, other principals, nested Jobs,
+simultaneous custodian failures, distributed recovery and real Engine YT
+supervisor code require additional testing.
+
+The **original 17-scenario Windows Gate V8 remains 0/17 executed** here
+because its B23–B25 source package is not present in the accessible GitHub
+repository/session. No gate, publication or release status changes.
