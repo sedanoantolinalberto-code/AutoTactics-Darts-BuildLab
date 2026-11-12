@@ -458,6 +458,55 @@ internal static class Program
         finally { DisposeOwned(ref job, ref duplicate, ref pi); }
     }
 
+    private static void TestUntrustedMarkerPidCannotTargetUnrelatedProcess()
+    {
+        // The marker PID is untrusted; a process outside the expected
+        // disposable Job must never obtain a termination-capable handle.
+        IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
+        PROCESS_INFORMATION pi = default;
+        using Process? control = Process.Start(new ProcessStartInfo(PowerShellPath())
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            ArgumentList = { "-NoProfile", "-NonInteractive", "-Command",
+                             "Start-Sleep -Seconds 60" }
+        });
+        Check(control is not null, "Could not create directly owned control process");
+        try
+        {
+            job = CreateConfiguredJob(); // New empty Job, unrelated to control.
+            Check(WaitForSingleObject(control!.Handle, 0) == WaitTimeout,
+                "Control exited before verification test");
+            IntPtr candidate = IntPtr.Zero;
+            bool rejected = false;
+            try
+            {
+                candidate = OpenVerifiedJobMember(control.Id, job);
+            }
+            catch (InvalidOperationException)
+            {
+                rejected = true;
+            }
+            finally
+            {
+                // Never terminate a candidate obtained from a forged PID.
+                if (candidate != IntPtr.Zero) CloseHandle(candidate);
+            }
+            Check(rejected, "Untrusted PID was accepted outside its expected Job");
+            Check(WaitForSingleObject(control.Handle, 0) == WaitTimeout,
+                "Membership check unexpectedly terminated unrelated control");
+        }
+        finally
+        {
+            DisposeOwned(ref job, ref duplicate, ref pi);
+            if (control is not null && !control.HasExited)
+            {
+                control.Kill(entireProcessTree: false); // Directly owned process handle.
+                control.WaitForExit(10000);
+            }
+        }
+    }
+
     private static void TestRepeatedAtomicCreationAndClose()
     {
         const int repetitions = 20;
@@ -682,7 +731,8 @@ internal static class Program
             ("explicit-breakaway-denied-by-job-policy", TestDisallowedBreakaway),
             ("twenty-atomic-creation-close-repetitions", TestRepeatedAtomicCreationAndClose),
             ("inheritable-job-handle-cannot-leak-with-inherit-false", TestInheritableJobHandleDoesNotLeakViaAtomicLaunch),
-            ("invalid-job-handle-fail-closed", TestInvalidJobHandleFailsClosed)
+            ("invalid-job-handle-fail-closed", TestInvalidJobHandleFailsClosed),
+            ("forged-pid-marker-never-targets-unrelated-process", TestUntrustedMarkerPidCannotTargetUnrelatedProcess)
         };
         int passed = 0;
         foreach (var (name, action) in checks)
