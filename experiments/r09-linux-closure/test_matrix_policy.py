@@ -65,12 +65,13 @@ class MatrixTests(unittest.TestCase):
         self.assertEqual(out["status"], "SYNTHETIC_COMPLETE_LOCAL_BATCHED_UNQUALIFIED_PASS")
         self.assertEqual(out["counts"]["passed"], 710)
 
-    def test_root_all_pass_observed_receipt_policy_only(self):
+    def test_self_labelled_native_receipt_without_external_attestation_blocked(self):
         doc = copy.deepcopy(self.doc)
         doc["evidence_kind"] = "OBSERVED_NATIVE"
-        self.assertEqual(self.result(doc)["status"], "COMPLETE_LOCAL_BATCHED_UNQUALIFIED_PASS")
-        # This only proves that a syntactically native-marked receipt can satisfy
-        # the policy. It does NOT authenticate the provenance of its logs.
+        # A fabricated JSONL log plus a freshly computed hash is not proof of
+        # who executed the tests, despite all case records being consistent.
+        self.assertEqual(self.result(doc)["status"],
+                         "BLOCKED_UNATTESTED_NATIVE_PROVENANCE")
 
     def test_unprivileged_two_skips_do_not_pass(self):
         doc = self.new_doc("unprivileged")
