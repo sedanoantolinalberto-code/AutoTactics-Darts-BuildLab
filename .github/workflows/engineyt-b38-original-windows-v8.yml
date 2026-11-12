@@ -1,0 +1,75 @@
+name: EngineYT B38 Original B23-B25 Gate V8 (review only)
+
+on:
+  push:
+    branches:
+      - review/windows-gate-v8-original-b38-20261112
+  pull_request:
+    branches:
+      - s34/windows-off-v025-link-only
+
+permissions:
+  contents: read
+
+jobs:
+  original-v8:
+    if: github.event_name == 'push' || github.head_ref == 'review/windows-gate-v8-original-b38-20261112'
+    runs-on: ${{ matrix.windows }}
+    strategy:
+      fail-fast: false
+      matrix:
+        windows: [windows-2022, windows-2025]
+    timeout-minutes: 12
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+          architecture: x64
+      - name: Record exact runner and Git identity
+        run: |
+          python --version
+          python -c "import platform; print(platform.platform()); print(platform.machine())"
+          git rev-parse HEAD
+      - name: Reconstruct and SHA-verify the 11 original Python modules
+        run: |
+          python experiments/windows-gate-v8-original/extract_exact_sources.py
+          if ($LASTEXITCODE -ne 0) { exit 2 }
+          Copy-Item experiments/windows-gate-v8-original/verify_windows_v8_evidence.py experiments/windows-gate-v8-original/native/verify_windows_v8_evidence.py
+          cd experiments/windows-gate-v8-original/native
+          python -c "import unittest,windows_gate_v8; assert unittest.defaultTestLoader.loadTestsFromTestCase(windows_gate_v8.WindowsGateV8).countTestCases()==17; print('ORIGINAL_GATE_V8_17_CASES_DETECTED')"
+          if ($LASTEXITCODE -ne 0) { exit 2 }
+      - name: Execute exactly the 17 original Windows V8 cases
+        run: |
+          $ErrorActionPreference = "Continue"
+          cd experiments/windows-gate-v8-original/native
+          python ./windows_gate_v8.py *> ./v8_native_full.log
+          $gateExit = $LASTEXITCODE
+          Get-Content ./v8_native_full.log
+          Write-Output "V8_NATIVE_GATE_EXIT=$gateExit"
+          if (Test-Path ./windows_gate_v8_result.json) {
+            python ./verify_windows_v8_evidence.py ./windows_gate_v8_result.json --source-dir . *> ./v8_b25_verifier.log
+            $verifyExit = $LASTEXITCODE
+            Get-Content ./v8_b25_verifier.log
+          } else {
+            $verifyExit = 2
+            Write-Output "B25_VERIFIER=BLOCKED_MISSING_REPORT"
+          }
+          Write-Output "B25_VERIFIER_EXIT=$verifyExit"
+          if ($gateExit -ne 0 -or $verifyExit -ne 0) { exit 1 }
+      - name: Preserve native evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineyt-v8-${{ matrix.windows }}-${{ github.sha }}
+          path: |
+            experiments/windows-gate-v8-original/native/windows_gate_v8_result.json
+            experiments/windows-gate-v8-original/native/v8_native_full.log
+            experiments/windows-gate-v8-original/native/v8_b25_verifier.log
+          if-no-files-found: warn
+          retention-days: 30
