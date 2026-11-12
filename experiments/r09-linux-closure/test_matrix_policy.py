@@ -226,6 +226,14 @@ class MatrixTests(unittest.TestCase):
         self.set_log(2, b"\n".join(rows) + b"\n")
         self.blocked(self.doc)
 
+    def test_duplicate_json_status_field_rejected(self):
+        rows = self.make_log("r07", 13).splitlines()
+        rows[0] = (b'{"schema":"engineyt-r09-case-result/0.1",'
+                   b'"case_id":"r07:0000","status":"SKIP","status":"PASS"}')
+        self.set_log(2, b"\n".join(rows) + b"\n")
+        self.assertEqual(self.blocked(self.doc)["reason"],
+                         "LOG_CONTENT_INVALID_OR_INCOMPLETE")
+
     def test_log_unexpected_status_rejected(self):
         self.set_log(2, self.make_log("r07", 13, {0:"UNEXPECTED_SUCCESS"}))
         self.blocked(self.doc)
