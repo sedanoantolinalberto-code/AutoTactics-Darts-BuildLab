@@ -16,3 +16,28 @@ This does not establish full descendant containment, crash survivability, filesy
 
 Require GitHub Actions logs, commit and outcomes before reporting any PASS.
 Gates R17/E5B4D NO-GO, TB09/G3 BLOCKED, rendering/publication disabled.
+
+## B32 — native results verified
+
+The B31 prototype was extended with three new adversarial Windows scenarios:
+
+- `suspended-child-killed-before-resume`: confirm Job closure terminates a child never resumed.
+- `descendant-after-parent-exit-killed-by-job`: grandchild stays in Job after its parent exits, then terminates when Job is closed.
+- `abrupt-custodian-death-kills-owned-child`: terminate the isolated custodian without cleanup; its owned child terminates as the last Job handle is closed.
+
+**Verified CI: Windows Server 2022 / x64 / .NET 8**
+
+- Baseline B31 run: `43136560568`, job `130913203266`: **4/4 PASS**.
+- Expanded B32 run: `43136982647`, job `130914574856`: **7/7 PASS**.
+- Commit under test for expanded run: `3b40d22a822662c092c19307d3868dff0cd04854`.
+- Logs inspected directly, including final `B31_RESULT pass=7 fail=0 total=7`. No skipped or synthetic cases represented as native tests.
+
+**Scope limitation:** This is not B23–B25 Gate V8, not a qualification of all 17 V8 cases, and not evidence about Linux or supervisor code in T21-R09. There is no automatic promotion and no release authority.
+
+To reproduce from this branch:
+
+```powershell
+dotnet run --project experiments/windows-job-b31/WindowsJobProbe.csproj --configuration Release
+```
+
+Use disposable Windows environment (CI or an isolated machine); the program starts and terminates only its own child processes. Avoid manual production deployment.
