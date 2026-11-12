@@ -1,0 +1,44 @@
+name: EngineYT R09 Linux reference closure (review only)
+
+on:
+  push:
+    branches:
+      - review/engineyt-r09-linux-closure-r5-r7-20261112
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  linux-r09-reference:
+    if: github.event_name == 'push' || github.head_ref == 'review/engineyt-r09-linux-closure-r5-r7-20261112'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Show kernel, UID and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          uname -a
+          python3 --version
+          id -u
+          git rev-parse HEAD
+      - name: Execute Linux reference R09-5 and synthetic R09-6 unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/r09-linux-closure
+          python3 -m unittest -v test_exit127_guard test_matrix_policy
+      - name: Repeat reference tests under root UID 0 (NOT T21-R09 official root matrix)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/r09-linux-closure
+          sudo env PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_exit127_guard test_matrix_policy
