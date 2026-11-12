@@ -1,0 +1,65 @@
+{
+  "schema": "engineyt-r09-linux-reference-evidence/0.1",
+  "classification": "REVIEW_ONLY_REFERENCE_NOT_T21_R09",
+  "branch": "review/engineyt-r09-linux-closure-r5-r7-20261112",
+  "observed_runs": [
+    {
+      "run_id": 43143903822,
+      "scope": "reference tests runner UID1001",
+      "tests": 34,
+      "passed": 33,
+      "errors": 1,
+      "conclusion": "failure",
+      "defect": "unhashable suite name raises TypeError"
+    },
+    {
+      "run_id": 43143981805,
+      "scope": "reference tests UID1001 and root",
+      "tests": 68,
+      "passed": 68,
+      "errors": 0,
+      "conclusion": "success"
+    },
+    {
+      "run_id": 43144282009,
+      "scope": "reference tests UID1001 root UID65534 with actual seccomp EPERM",
+      "tests": 105,
+      "passed": 105,
+      "errors": 0,
+      "conclusion": "success"
+    },
+    {
+      "run_id": 43144576938,
+      "job_id": 130939271732,
+      "scope": "reference tests UID1001 root UID65534 including FIFO and symlink adversarial checks",
+      "tests": 123,
+      "passed": 123,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success"
+    }
+  ],
+  "sources": [
+    "experiments/r09-linux-closure/exit127_guard.py",
+    "experiments/r09-linux-closure/test_exit127_guard.py",
+    "experiments/r09-linux-closure/matrix_policy.py",
+    "experiments/r09-linux-closure/test_matrix_policy.py"
+  ],
+  "last_test_commit": "158081f26f2df7d15729544f6a0c7bdc4a17e2ae",
+  "actual_seccomp_kernel_denial_observed": true,
+  "test_cases_per_uid": {
+    "reference_launcher": 15,
+    "synthetic_matrix": 26,
+    "total": 41
+  },
+  "official_t21_r09_suites_executed": 0,
+  "real_cgroup_v2_delegation_tests_executed": 0,
+  "qualified_full_descendant_containment": false,
+  "linux_gate": "BLOCKED",
+  "r17_e5b4d": "NO-GO",
+  "tb09_g3": "BLOCKED",
+  "rendering_go": false,
+  "publishing_go": false,
+  "production_integrated": false,
+  "explicit_caveat": "Test observations pertain only to a reference lab; Claudes local R09 commits and T21 packages were not in this GitHub branch."
+}
