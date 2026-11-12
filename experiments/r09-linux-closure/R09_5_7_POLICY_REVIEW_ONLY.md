@@ -147,3 +147,26 @@ comprueba explícitamente que la lectura no se bloquee.
 **Bloqueos no resueltos:** custodia de descendientes tras cambios de
 credenciales, cgroup v2 delegado y custodia externa bajo fallos simultáneos.
 R17/E5B4D NO-GO, TB09/G3 BLOCKED. Sin promoción a producción.
+
+
+## R09-7 — Evidencia nativa de límites estructurales de PDEATHSIG
+
+Se añadió \`test_kernel_semantics.py\` en copia aislada, sin tocar el
+supervisor real. La ejecución \`43145127555\` de GitHub Actions pasó:
+
+- UID 1001: 41 pruebas R09-5/6 + 1 prueba real de \`fork\`, todas PASS.
+- UID 0: 41 pruebas R09-5/6 + 2 comprobaciones de kernel
+  (\`fork\` y pérdida tras \`setuid(65534)\`), todas PASS.
+- UID 65534: 41 pruebas R09-5/6 + 1 prueba real de \`fork\`,
+  todas PASS.
+
+**Total de esta campaña: 127/127 PASS**, 0 FAIL, 0 SKIP.
+
+Lo observado es el *contraejemplo de seguridad*: la señal de muerte del padre
+no se hereda por el nieto, y el cambio de UID puede desactivar PDEATHSIG.
+Por tanto, estas pruebas **no convierten** la custodia de descendientes en PASS.
+Refuerzan el requisito de un cgroup v2 delegado y un custodio externo, aún
+no validados sobre T21-R09.
+
+La rutina de pruebas solo envía señales a hijos propios todavía no recolectados;
+tras \`waitpid\` no intenta señalizar PIDs potencialmente reutilizados.
