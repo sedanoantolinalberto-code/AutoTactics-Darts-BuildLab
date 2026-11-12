@@ -264,6 +264,38 @@ class MatrixTests(unittest.TestCase):
         self.assertEqual(self.result()["status"],
                          "SYNTHETIC_COMPLETE_LOCAL_BATCHED_UNQUALIFIED_PASS")
 
+    def test_f3_fabricated_case_id_with_valid_hash_rejected(self):
+        # Claude R11: forged unique ID + legitimate count + fresh SHA.
+        rows = self.make_log("official", 634).splitlines()
+        item = json.loads(rows[17])
+        item["case_id"] = "official:FORGED17"
+        rows[17] = json.dumps(item, sort_keys=True).encode()
+        self.set_log(0, b"\n".join(rows) + b"\n")
+        self.assertEqual(self.blocked(self.doc)["reason"],
+                         "LOG_CASE_SET_MISMATCH")
+
+    def test_f3_case_id_from_another_suite_rejected(self):
+        rows = self.make_log("additional", 49).splitlines()
+        item = json.loads(rows[0])
+        item["case_id"] = "official:0000"
+        rows[0] = json.dumps(item, sort_keys=True).encode()
+        self.set_log(1, b"\n".join(rows) + b"\n")
+        self.assertEqual(self.blocked(self.doc)["reason"],
+                         "LOG_CASE_SET_MISMATCH")
+
+    def test_f3_duplicate_log_path_for_two_suites_rejected_early(self):
+        # Reject shared paths before reading any logs; do not trust their
+        # separately declared suite identities, sizes or hashes.
+        self.doc["suites"][1]["log_path"] = self.doc["suites"][0]["log_path"]
+        self.doc["suites"][1]["log_sha256"] = self.doc["suites"][0]["log_sha256"]
+        self.assertEqual(self.blocked(self.doc)["reason"],
+                         "DUPLICATE_LOG_REFERENCE")
+
+    def test_f3_duplicate_digest_for_distinct_paths_rejected_early(self):
+        self.doc["suites"][1]["log_sha256"] = self.doc["suites"][0]["log_sha256"]
+        self.assertEqual(self.blocked(self.doc)["reason"],
+                         "DUPLICATE_LOG_REFERENCE")
+
     def test_invalid_receipt_object_is_blocked(self):
         self.blocked(None)
 
