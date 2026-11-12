@@ -25,6 +25,7 @@ internal static class Program
     private const uint ProcessTerminate = 0x0001;
     private const uint ProcessQueryLimitedInformation = 0x1000;
     private const int JobObjectExtendedLimitInformation = 9;
+    private const uint JobObjectQuery = 0x0004;
     private static readonly IntPtr ProcThreadAttributeJobList = new(0x0002000D);
 
     [StructLayout(LayoutKind.Sequential)]
@@ -93,6 +94,8 @@ internal static class Program
 
     [DllImport("kernel32.dll", EntryPoint = "CreateJobObjectW", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern IntPtr CreateJobObject(IntPtr securityAttributes, string? name);
+    [DllImport("kernel32.dll", EntryPoint = "OpenJobObjectW", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern IntPtr OpenJobObject(uint desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inherit, string name);
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetInformationJobObject(IntPtr job, int infoClass,
@@ -157,9 +160,9 @@ internal static class Program
         if (!condition) throw new Win32Exception(Marshal.GetLastWin32Error(), api);
     }
 
-    private static IntPtr CreateConfiguredJob()
+    private static IntPtr CreateConfiguredJob(string? name = null)
     {
-        IntPtr job = CreateJobObject(IntPtr.Zero, null);
+        IntPtr job = CreateJobObject(IntPtr.Zero, name);
         CheckWin(job != IntPtr.Zero, "CreateJobObject");
         try
         {
@@ -503,12 +506,26 @@ internal static class Program
         throw new TimeoutException("Disposable process did not write its PID marker");
     }
 
-    private static IntPtr OwnedChildHandle(int pid)
+    // An untrusted PID marker cannot authorize termination. Verify membership
+    // using a Job handle tied to the specific disposable test before returning.
+    private static IntPtr OpenVerifiedJobMember(int pid, IntPtr expectedJob)
     {
+        Check(expectedJob != IntPtr.Zero, "Missing Job identity for PID verification");
         IntPtr child = OpenProcess(Synchronize | ProcessTerminate | ProcessQueryLimitedInformation,
             false, checked((uint)pid));
-        CheckWin(child != IntPtr.Zero, "OpenProcess(owned descendant)");
-        return child;
+        CheckWin(child != IntPtr.Zero, "OpenProcess(candidate Job descendant)");
+        try
+        {
+            CheckWin(IsProcessInJob(child, expectedJob, out bool inside),
+                "IsProcessInJob(candidate)");
+            Check(inside, "Untrusted PID marker pointed outside the expected Job");
+            return child;
+        }
+        catch
+        {
+            CloseHandle(child);
+            throw;
+        }
     }
 
     private static void DisposeOwnedHandle(ref IntPtr handle)
@@ -568,11 +585,9 @@ internal static class Program
             pi = launched.process;
             Resume(pi);
             int descendantPid = WaitMarker(marker);
-            descendant = OwnedChildHandle(descendantPid);
+            descendant = OpenVerifiedJobMember(descendantPid, job);
             Check(WaitForSingleObject(pi.hProcess, 10000) == WaitObject0,
                 "Worker did not exit after writing descendant PID");
-            CheckWin(IsProcessInJob(descendant, job, out bool inside), "IsProcessInJob(descendant)");
-            Check(inside, "Descendant was not inherited into parent Job");
             Check(WaitForSingleObject(descendant, 0) == WaitTimeout,
                 "Descendant terminated unexpectedly before closing Job");
             CloseJob(ref job);
@@ -588,13 +603,13 @@ internal static class Program
     }
 
     // Separate custodian process intentionally killed by the parent test.
-    private static int RunCustodian(string marker)
+    private static int RunCustodian(string marker, string jobName)
     {
         IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
         PROCESS_INFORMATION pi = default;
         try
         {
-            job = CreateConfiguredJob();
+            job = CreateConfiguredJob(jobName);
             pi = LaunchAtomic(job);
             Resume(pi);
             File.WriteAllText(marker,
@@ -608,20 +623,27 @@ internal static class Program
     private static void TestAbruptCustodianTermination()
     {
         string marker = NewMarker();
-        IntPtr child = IntPtr.Zero;
+        string jobName = "Local\\EngineYT_B35_" + Guid.NewGuid().ToString("N");
+        IntPtr child = IntPtr.Zero, verificationJob = IntPtr.Zero;
         using Process? custodian = Process.Start(new ProcessStartInfo(OwnExecutablePath())
         {
             UseShellExecute = false,
             CreateNoWindow = true,
-            ArgumentList = { "--custodian", marker }
+            ArgumentList = { "--custodian", marker, jobName }
         });
         Check(custodian is not null, "Could not start separate custodian");
         try
         {
             int childPid = WaitMarker(marker);
-            child = OwnedChildHandle(childPid);
+            verificationJob = OpenJobObject(JobObjectQuery, false, jobName);
+            CheckWin(verificationJob != IntPtr.Zero, "OpenJobObject(own custodian)");
+            child = OpenVerifiedJobMember(childPid, verificationJob);
             Check(WaitForSingleObject(child, 0) == WaitTimeout,
                 "Custodian child exited before termination test");
+            // Important: the verifier's own handle must be closed BEFORE
+            // killing the custodian, or it would prevent KILL_ON_JOB_CLOSE.
+            CheckWin(CloseHandle(verificationJob), "CloseHandle(verification Job)");
+            verificationJob = IntPtr.Zero;
             // Abrupt OS termination (without managed finally) of only the owned custodian.
             custodian!.Kill(entireProcessTree: false);
             Check(custodian.WaitForExit(10000), "Custodian did not exit after Kill");
@@ -630,6 +652,7 @@ internal static class Program
         }
         finally
         {
+            if (verificationJob != IntPtr.Zero) CloseHandle(verificationJob);
             if (custodian is not null && !custodian.HasExited)
             {
                 custodian.Kill(entireProcessTree: false);
@@ -644,7 +667,7 @@ internal static class Program
     {
         if (args.Length == 2 && args[0] == "--worker-descendant") return RunDescendantWorker(args[1]);
         if (args.Length == 2 && args[0] == "--worker-breakaway") return RunDisallowedBreakawayWorker(args[1]);
-        if (args.Length == 2 && args[0] == "--custodian") return RunCustodian(args[1]);
+        if (args.Length == 3 && args[0] == "--custodian") return RunCustodian(args[1], args[2]);
         if (!OperatingSystem.IsWindows()) { Console.Error.WriteLine("BLOCKED: Windows native required"); return 2; }
         if (IntPtr.Size != 8) { Console.Error.WriteLine("BLOCKED: 64-bit runner required"); return 2; }
         var checks = new (string, Action)[]
