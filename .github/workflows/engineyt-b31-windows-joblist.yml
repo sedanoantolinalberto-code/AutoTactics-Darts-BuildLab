@@ -1,0 +1,33 @@
+name: EngineYT B31 — Windows JobList Native Probe (Review Only)
+
+on:
+  push:
+    branches:
+      - review/windows-joblist-native-probe-b31-20261112
+  pull_request:
+    branches:
+      - s34/windows-off-v025-link-only
+
+permissions:
+  contents: read
+
+jobs:
+  windows-joblist-probe:
+    if: github.event_name == 'push' || github.head_ref == 'review/windows-joblist-native-probe-b31-20261112'
+    runs-on: windows-2022
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Runtime identity
+        shell: pwsh
+        run: |
+          dotnet --info
+          git rev-parse HEAD
+      - name: Run B31 disposable Job Object tests
+        shell: pwsh
+        run: dotnet run --project experiments/windows-job-b31/WindowsJobProbe.csproj --configuration Release
