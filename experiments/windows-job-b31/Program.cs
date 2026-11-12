@@ -6,6 +6,8 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
+using System.Threading;
 
 internal static class Program
 {
@@ -18,6 +20,9 @@ internal static class Program
     private const uint WaitObject0 = 0;
     private const uint WaitTimeout = 258;
     private const uint DuplicateSameAccess = 2;
+    private const uint Synchronize = 0x00100000;
+    private const uint ProcessTerminate = 0x0001;
+    private const uint ProcessQueryLimitedInformation = 0x1000;
     private const int JobObjectExtendedLimitInformation = 9;
     private static readonly IntPtr ProcThreadAttributeJobList = new(0x0002000D);
 
@@ -130,6 +135,8 @@ internal static class Program
     [DllImport("kernel32.dll")]
     private static extern IntPtr GetCurrentProcess();
     [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, uint pid);
+    [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetHandleInformation(IntPtr handle, out uint flags);
     [DllImport("kernel32.dll", SetLastError = true)]
@@ -174,7 +181,7 @@ internal static class Program
         return path;
     }
 
-    private static (bool created, PROCESS_INFORMATION process, int error) TryCreateAtomic(IntPtr job, string program)
+    private static (bool created, PROCESS_INFORMATION process, int error) TryCreateAtomic(IntPtr job, string program, string? arguments = null)
     {
         IntPtr required = IntPtr.Zero, buffer = IntPtr.Zero, listValue = IntPtr.Zero;
         bool initialized = false;
@@ -196,8 +203,8 @@ internal static class Program
             startup.StartupInfo.cb = (uint)Marshal.SizeOf<STARTUPINFOEX>();
             startup.lpAttributeList = buffer;
             // Explicit application path, no handle inheritance, no shell.
-            var cmd = new StringBuilder("\"" + program +
-                "\" -NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 60\"");
+            var cmd = new StringBuilder("\"" + program + "\" " +
+                (arguments ?? "-NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 60\""));
             bool created = CreateProcess(program, cmd, IntPtr.Zero, IntPtr.Zero, false,
                 ExtendedStartupInfoPresent | CreateSuspended | CreateNoWindow,
                 IntPtr.Zero, null, ref startup, out PROCESS_INFORMATION pi);
@@ -321,8 +328,174 @@ internal static class Program
         finally { DisposeOwned(ref job, ref duplicate, ref pi); }
     }
 
-    public static int Main()
+
+    private static string OwnExecutablePath()
     {
+        string? path = Environment.ProcessPath;
+        Check(path is not null && path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+            && File.Exists(path), "A native apphost EXE is required for this isolated probe");
+        return path!;
+    }
+
+    private static string NewMarker() =>
+        Path.Combine(Path.GetTempPath(), "engineyt-b32-" + Guid.NewGuid().ToString("N") + ".pid");
+
+    private static int WaitMarker(string path, int milliseconds = 10000)
+    {
+        var watch = Stopwatch.StartNew();
+        while (watch.ElapsedMilliseconds < milliseconds)
+        {
+            if (File.Exists(path))
+            {
+                string value = File.ReadAllText(path).Trim();
+                if (int.TryParse(value, out int pid) && pid > 0) return pid;
+            }
+            Thread.Sleep(50);
+        }
+        throw new TimeoutException("Disposable process did not write its PID marker");
+    }
+
+    private static IntPtr OwnedChildHandle(int pid)
+    {
+        IntPtr child = OpenProcess(Synchronize | ProcessTerminate | ProcessQueryLimitedInformation,
+            false, checked((uint)pid));
+        CheckWin(child != IntPtr.Zero, "OpenProcess(owned descendant)");
+        return child;
+    }
+
+    private static void DisposeOwnedHandle(ref IntPtr handle)
+    {
+        if (handle == IntPtr.Zero) return;
+        if (WaitForSingleObject(handle, 0) == WaitTimeout) TerminateProcess(handle, 1);
+        CloseHandle(handle);
+        handle = IntPtr.Zero;
+    }
+
+    private static void TestKillWhileStillSuspended()
+    {
+        IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
+        PROCESS_INFORMATION pi = default;
+        try
+        {
+            job = CreateConfiguredJob();
+            pi = LaunchAtomic(job);
+            CheckWin(IsProcessInJob(pi.hProcess, job, out bool inside), "IsProcessInJob");
+            Check(inside, "Suspended child was not born inside Job");
+            CloseJob(ref job); // No ResumeThread; parent never executes user code.
+            Check(WaitForSingleObject(pi.hProcess, 10000) == WaitObject0,
+                "Closing Job handle did not kill suspended child");
+        }
+        finally { DisposeOwned(ref job, ref duplicate, ref pi); }
+    }
+
+    // Executed as a child inside a Job Object, and exits while its descendant keeps sleeping.
+    private static int RunDescendantWorker(string marker)
+    {
+        var psi = new ProcessStartInfo(PowerShellPath())
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        psi.ArgumentList.Add("-NoProfile");
+        psi.ArgumentList.Add("-NonInteractive");
+        psi.ArgumentList.Add("-Command");
+        psi.ArgumentList.Add("Start-Sleep -Seconds 60");
+        using Process? grandchild = Process.Start(psi);
+        Check(grandchild is not null, "Failed to create disposable descendant");
+        File.WriteAllText(marker, grandchild!.Id.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        return 0;
+    }
+
+    private static void TestGrandchildAfterParentExit()
+    {
+        IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero, descendant = IntPtr.Zero;
+        PROCESS_INFORMATION pi = default;
+        string marker = NewMarker();
+        try
+        {
+            job = CreateConfiguredJob();
+            var launched = TryCreateAtomic(job, OwnExecutablePath(),
+                "--worker-descendant \"" + marker + "\"");
+            if (!launched.created) throw new Win32Exception(launched.error, "CreateProcessW(worker in Job)");
+            pi = launched.process;
+            Resume(pi);
+            int descendantPid = WaitMarker(marker);
+            descendant = OwnedChildHandle(descendantPid);
+            Check(WaitForSingleObject(pi.hProcess, 10000) == WaitObject0,
+                "Worker did not exit after writing descendant PID");
+            CheckWin(IsProcessInJob(descendant, job, out bool inside), "IsProcessInJob(descendant)");
+            Check(inside, "Descendant was not inherited into parent Job");
+            Check(WaitForSingleObject(descendant, 0) == WaitTimeout,
+                "Descendant terminated unexpectedly before closing Job");
+            CloseJob(ref job);
+            Check(WaitForSingleObject(descendant, 10000) == WaitObject0,
+                "Grandchild survived final close after parent exited");
+        }
+        finally
+        {
+            DisposeOwned(ref job, ref duplicate, ref pi);
+            DisposeOwnedHandle(ref descendant);
+            if (File.Exists(marker)) File.Delete(marker);
+        }
+    }
+
+    // Separate custodian process intentionally killed by the parent test.
+    private static int RunCustodian(string marker)
+    {
+        IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
+        PROCESS_INFORMATION pi = default;
+        try
+        {
+            job = CreateConfiguredJob();
+            pi = LaunchAtomic(job);
+            Resume(pi);
+            File.WriteAllText(marker,
+                pi.dwProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            Thread.Sleep(TimeSpan.FromSeconds(60));
+            return 0;
+        }
+        finally { DisposeOwned(ref job, ref duplicate, ref pi); }
+    }
+
+    private static void TestAbruptCustodianTermination()
+    {
+        string marker = NewMarker();
+        IntPtr child = IntPtr.Zero;
+        using Process? custodian = Process.Start(new ProcessStartInfo(OwnExecutablePath())
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            ArgumentList = { "--custodian", marker }
+        });
+        Check(custodian is not null, "Could not start separate custodian");
+        try
+        {
+            int childPid = WaitMarker(marker);
+            child = OwnedChildHandle(childPid);
+            Check(WaitForSingleObject(child, 0) == WaitTimeout,
+                "Custodian child exited before termination test");
+            // Abrupt OS termination (without managed finally) of only the owned custodian.
+            custodian!.Kill(entireProcessTree: false);
+            Check(custodian.WaitForExit(10000), "Custodian did not exit after Kill");
+            Check(WaitForSingleObject(child, 10000) == WaitObject0,
+                "Child survived abrupt custodian death: Job handle leak or policy failure");
+        }
+        finally
+        {
+            if (custodian is not null && !custodian.HasExited)
+            {
+                custodian.Kill(entireProcessTree: false);
+                custodian.WaitForExit(10000);
+            }
+            DisposeOwnedHandle(ref child);
+            if (File.Exists(marker)) File.Delete(marker);
+        }
+    }
+
+    public static int Main(string[] args)
+    {
+        if (args.Length == 2 && args[0] == "--worker-descendant") return RunDescendantWorker(args[1]);
+        if (args.Length == 2 && args[0] == "--custodian") return RunCustodian(args[1]);
         if (!OperatingSystem.IsWindows()) { Console.Error.WriteLine("BLOCKED: Windows native required"); return 2; }
         if (IntPtr.Size != 8) { Console.Error.WriteLine("BLOCKED: 64-bit runner required"); return 2; }
         var checks = new (string, Action)[]
@@ -330,7 +503,10 @@ internal static class Program
             ("configuration-and-job-handle-inheritance", TestConfiguredJobAndHandleInheritance),
             ("atomic-job-list-and-kill-on-last-close", TestAtomicMembershipAndClose),
             ("duplicated-job-handle-lifetime", TestDuplicateJobHandleDelaysTermination),
-            ("invalid-executable-fail-closed", TestInvalidExecutableFailsClosed)
+            ("invalid-executable-fail-closed", TestInvalidExecutableFailsClosed),
+            ("suspended-child-killed-before-resume", TestKillWhileStillSuspended),
+            ("descendant-after-parent-exit-killed-by-job", TestGrandchildAfterParentExit),
+            ("abrupt-custodian-death-kills-owned-child", TestAbruptCustodianTermination)
         };
         int passed = 0;
         foreach (var (name, action) in checks)
