@@ -26,6 +26,7 @@ internal static class Program
     private const uint ProcessQueryLimitedInformation = 0x1000;
     private const int JobObjectExtendedLimitInformation = 9;
     private const uint JobObjectQuery = 0x0004;
+    private const int ErrorAlreadyExists = 183;
     private static readonly IntPtr ProcThreadAttributeJobList = new(0x0002000D);
 
     [StructLayout(LayoutKind.Sequential)]
@@ -163,9 +164,14 @@ internal static class Program
     private static IntPtr CreateConfiguredJob(string? name = null)
     {
         IntPtr job = CreateJobObject(IntPtr.Zero, name);
+        int createError = Marshal.GetLastWin32Error();
         CheckWin(job != IntPtr.Zero, "CreateJobObject");
         try
         {
+            // A named Job is required for authenticated test PID resolution.
+            // Reopening a preexisting name could alias somebody else's process.
+            if (name is not null && createError == ErrorAlreadyExists)
+                throw new InvalidOperationException("Unexpected existing Job name");
             var info = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
             info.BasicLimitInformation.LimitFlags = KillOnJobClose;
             uint size = (uint)Marshal.SizeOf<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>();
@@ -458,6 +464,33 @@ internal static class Program
         finally { DisposeOwned(ref job, ref duplicate, ref pi); }
     }
 
+    private static void TestNamedJobNameCollisionFailsClosed()
+    {
+        IntPtr job = IntPtr.Zero, duplicate = IntPtr.Zero;
+        PROCESS_INFORMATION pi = default;
+        try
+        {
+            string name = "Local\\EngineYT_B36_" + Guid.NewGuid().ToString("N");
+            job = CreateConfiguredJob(name);
+            bool rejected = false;
+            IntPtr accidental = IntPtr.Zero;
+            try
+            {
+                accidental = CreateConfiguredJob(name);
+            }
+            catch (InvalidOperationException)
+            {
+                rejected = true;
+            }
+            finally
+            {
+                if (accidental != IntPtr.Zero) CloseHandle(accidental);
+            }
+            Check(rejected, "Existing named Job accepted as new custodian identity");
+        }
+        finally { DisposeOwned(ref job, ref duplicate, ref pi); }
+    }
+
     private static void TestUntrustedMarkerPidCannotTargetUnrelatedProcess()
     {
         // The marker PID is untrusted; a process outside the expected
@@ -732,7 +765,8 @@ internal static class Program
             ("twenty-atomic-creation-close-repetitions", TestRepeatedAtomicCreationAndClose),
             ("inheritable-job-handle-cannot-leak-with-inherit-false", TestInheritableJobHandleDoesNotLeakViaAtomicLaunch),
             ("invalid-job-handle-fail-closed", TestInvalidJobHandleFailsClosed),
-            ("forged-pid-marker-never-targets-unrelated-process", TestUntrustedMarkerPidCannotTargetUnrelatedProcess)
+            ("forged-pid-marker-never-targets-unrelated-process", TestUntrustedMarkerPidCannotTargetUnrelatedProcess),
+            ("named-job-collision-rejected", TestNamedJobNameCollisionFailsClosed)
         };
         int passed = 0;
         foreach (var (name, action) in checks)
