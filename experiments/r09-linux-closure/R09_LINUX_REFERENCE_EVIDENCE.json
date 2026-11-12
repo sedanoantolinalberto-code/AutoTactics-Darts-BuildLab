@@ -148,6 +148,44 @@
         }
       ],
       "qualification": "REFERENCE_ONLY; mixed synthetic policies and isolated native launch tests"
+    },
+    {
+      "run_id": 43227459936,
+      "job_id": 131214225596,
+      "scope": "F3 four expected-failing red adversarial tests on old code",
+      "tests_per_uid_attempted": 61,
+      "uid_before_abort": 1001,
+      "failures_in_red_campaign": 4,
+      "conclusion": "failure",
+      "qualification": "intentional RED CI; no official T21 tests"
+    },
+    {
+      "run_id": 43227649204,
+      "job_id": 131214902877,
+      "scope": "F3 suite case-ID manifest + duplicate log reference policy",
+      "tests": 187,
+      "passed": 187,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success",
+      "uid_breakdown": [
+        {
+          "uid": 1001,
+          "reference": 61,
+          "kernel": 1
+        },
+        {
+          "uid": 0,
+          "reference": 61,
+          "kernel": 2
+        },
+        {
+          "uid": 65534,
+          "reference": 61,
+          "kernel": 1
+        }
+      ],
+      "qualification": "REFERENCE_ONLY; synthetic lab IDs are not authenticated T21 case manifest"
     }
   ],
   "sources": [
@@ -156,7 +194,7 @@
     "experiments/r09-linux-closure/matrix_policy.py",
     "experiments/r09-linux-closure/test_matrix_policy.py"
   ],
-  "last_test_commit": "3717beb907f88aa62cb5e4cfb991ec63d26b3ad4",
+  "last_test_commit": "96f72239b50889c97c8144ba61dd890e69848e39",
   "actual_seccomp_kernel_denial_observed": true,
   "test_cases_per_uid": {
     "reference_launcher": 15,
@@ -178,15 +216,19 @@
   "external_custodian_qualified": false,
   "f1_autodeclared_counts_rejected": true,
   "f2_timeout_distinguished_from_protocol_failure": true,
-  "receipt_schema_current": "engineyt-r09-suite-receipts/0.2",
+  "receipt_schema_current": "engineyt-r09-suite-receipts/0.3",
   "test_result_log_schema": "engineyt-r09-case-result/0.1",
   "latest_per_uid": {
     "reference_launcher": 18,
-    "synthetic_matrix": 39,
-    "reference_total": 57
+    "synthetic_matrix": 43,
+    "reference_total": 61
   },
   "source_provenance_authenticated": false,
   "skip_selection_note": "127/127 run selected one native kernel fork test for UID 65534 and did NOT run root-only uid-drop test under UID 65534. Claude independently ran the complete kernel class under UID 65534, yielding one expected SKIP; these are different test selections.",
   "duplicate_json_fields_rejected": true,
-  "unattested_native_result_cannot_pass": true
+  "unattested_native_result_cannot_pass": true,
+  "f3_fabricated_case_ids_rejected_in_reference_lab": true,
+  "f3_duplicate_log_path_or_hash_rejected": true,
+  "native_source_commit_and_executor_attestation": false,
+  "qualification": false
 }
