@@ -55,6 +55,8 @@ def evaluate(doc: object, log_root: Path) -> dict:
     if not isinstance(suites, list) or len(suites) != len(EXPECTED):
         return blocked("FOUR_SUITES_REQUIRED")
     names = [x.get("name") if isinstance(x, dict) else None for x in suites]
+    if any(not isinstance(name, str) or name not in EXPECTED for name in names):
+        return blocked("SUITE_NAME_TYPE_OR_UNKNOWN")
     if len(set(names)) != len(EXPECTED) or set(names) != set(EXPECTED):
         return blocked("SUITE_MEMBERSHIP")
 
