@@ -16,11 +16,18 @@ import re
 import stat
 from pathlib import Path
 
-SCHEMA = "engineyt-r09-suite-receipts/0.2"
+SCHEMA = "engineyt-r09-suite-receipts/0.3"
 RESULT_SCHEMA = "engineyt-r09-case-result/0.1"
 RESULT_STATUS = {"PASS":"passed", "FAIL":"failed", "ERROR":"errors", "SKIP":"skipped", "XFAIL":"xfailed"}
 CASE_PATTERN = re.compile(r"[A-Za-z0-9._:-]{1,120}\Z")
 EXPECTED = {"official": 634, "additional": 49, "r07": 13, "r09": 14}
+# Bounded fixture IDs for the *synthetic reference lab*, not an authenticated
+# manifest of real T21 cases. Real suites require their own externally pinned
+# case-ID manifest and a separately attested executor.
+EXPECTED_CASE_IDS = {
+    name: frozenset(f"{name}:{i:04d}" for i in range(count))
+    for name, count in EXPECTED.items()
+}
 COUNT_FIELDS = ("passed", "failed", "errors", "skipped", "xfailed")
 ROOT_UID = 0
 UNPRIV_UID = 65534
@@ -99,34 +106,40 @@ def _unique_json_pairs(pairs):
     return result
 
 
-def _derive_counts_from_jsonl(raw: bytes, expected: int) -> dict | None:
-    """Require exactly one unambiguous record for every unique case id."""
+def _derive_counts_from_jsonl(raw: bytes, suite: str) -> tuple[dict | None, str | None]:
+    """Recount only the exact canonical synthetic case set for this suite.
+
+    Not suitable for proving real native test IDs; these fixtures are synthetic.
+    """
+    expected = EXPECTED[suite]
     if not raw or not raw.endswith(b"\n") or b"\r" in raw or b"\x00" in raw:
-        return None
+        return None, "LOG_CONTENT_INVALID_OR_INCOMPLETE"
     lines = raw.split(b"\n")[:-1]
     if len(lines) != expected:
-        return None
+        return None, "LOG_CONTENT_INVALID_OR_INCOMPLETE"
     counts = {field: 0 for field in COUNT_FIELDS}
     seen = set()
     for line in lines:
         if not line or len(line) > 4096:
-            return None
+            return None, "LOG_CONTENT_INVALID_OR_INCOMPLETE"
         try:
             item = json.loads(line.decode("utf-8"), object_pairs_hook=_unique_json_pairs)
         except (UnicodeError, ValueError, json.JSONDecodeError):
-            return None
+            return None, "LOG_CONTENT_INVALID_OR_INCOMPLETE"
         if not isinstance(item, dict) or set(item) != {"schema", "case_id", "status"}:
-            return None
+            return None, "LOG_CONTENT_INVALID_OR_INCOMPLETE"
         case_id = item["case_id"]
         status = item["status"]
         if (item["schema"] != RESULT_SCHEMA or
             not isinstance(case_id, str) or CASE_PATTERN.fullmatch(case_id) is None or
             case_id in seen or not isinstance(status, str) or
             status not in RESULT_STATUS):
-            return None
+            return None, "LOG_CONTENT_INVALID_OR_INCOMPLETE"
         seen.add(case_id)
         counts[RESULT_STATUS[status]] += 1
-    return counts
+    if seen != EXPECTED_CASE_IDS[suite]:
+        return None, "LOG_CASE_SET_MISMATCH"
+    return counts, None
 
 
 def evaluate(doc: object, log_root: Path) -> dict:
@@ -153,6 +166,11 @@ def evaluate(doc: object, log_root: Path) -> dict:
         return blocked("SUITE_MEMBERSHIP")
 
     total_pass = total_skip = total_xfail = total_fail = total_error = 0
+    # Reject any second suite that reuses a log path or a claimed SHA-256.
+    # The stricter contract is deliberately specific to isolated synthetic
+    # fixtures; it does not authenticate independently produced evidence.
+    used_log_paths = set()
+    used_log_digests = set()
     for item in suites:
         if set(item) != ({"name", "expected", "exit_status", "log_path", "log_sha256"} | set(COUNT_FIELDS)):
             return blocked("SUITE_EXACT_SCHEMA")
@@ -165,12 +183,19 @@ def evaluate(doc: object, log_root: Path) -> dict:
             return blocked("SUM_MISMATCH")
         if type(item["exit_status"]) is not int or not 0 <= item["exit_status"] <= 255:
             return blocked("EXIT_STATUS")
-        raw = _read_verified_log(log_root, item["log_path"], item["log_sha256"])
+        log_path, log_digest = item["log_path"], item["log_sha256"]
+        if not isinstance(log_path, str) or not isinstance(log_digest, str):
+            return blocked("LOG_HASH_OR_PATH")
+        if log_path in used_log_paths or log_digest in used_log_digests:
+            return blocked("DUPLICATE_LOG_REFERENCE")
+        used_log_paths.add(log_path)
+        used_log_digests.add(log_digest)
+        raw = _read_verified_log(log_root, log_path, log_digest)
         if raw is None:
             return blocked("LOG_HASH_OR_PATH")
-        derived = _derive_counts_from_jsonl(raw, item["expected"])
+        derived, log_problem = _derive_counts_from_jsonl(raw, item["name"])
         if derived is None:
-            return blocked("LOG_CONTENT_INVALID_OR_INCOMPLETE")
+            return blocked(log_problem or "LOG_CONTENT_INVALID_OR_INCOMPLETE")
         if any(item[field] != derived[field] for field in COUNT_FIELDS):
             return blocked("DECLARED_COUNTS_DISAGREE_WITH_LOG")
         total_pass += derived["passed"]
