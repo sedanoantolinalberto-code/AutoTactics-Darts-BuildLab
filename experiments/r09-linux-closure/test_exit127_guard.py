@@ -6,7 +6,7 @@ import signal
 import sys
 import unittest
 
-from exit127_guard import _classify, run_guarded
+from exit127_guard import _classify, _deadline_outcome, run_guarded
 
 LINUX = sys.platform.startswith("linux")
 
@@ -74,8 +74,21 @@ class Exit127Tests(unittest.TestCase):
     def test_owned_child_timeout_is_fail_closed(self):
         result = run_guarded(sys.executable, [sys.executable, "-c", "import time;time.sleep(3)"],
                              timeout_seconds=0.12)
-        self.assertEqual(result.kind, "TIMEOUT_OR_PROTOCOL_FAILURE")
+        self.assertEqual(result.kind, "TEST_TIMEOUT")
         self.assertIsNone(result.exit_code)
+
+    def test_deadline_with_reaped_child_and_missing_eof_is_protocol_not_timeout(self):
+        result = _deadline_outcome(0, False, 120)
+        self.assertEqual(result.kind, "SETUP_PIPE_EOF_MISSING")
+        self.assertIsNone(result.exit_code)
+
+    def test_deadline_with_oversized_report_is_not_timeout(self):
+        result = _deadline_outcome(None, True, 80)
+        self.assertEqual(result.kind, "MALFORMED_SETUP_REPORT")
+
+    def test_deadline_with_unreaped_child_is_timeout(self):
+        result = _deadline_outcome(None, False, 120)
+        self.assertEqual(result.kind, "TEST_TIMEOUT")
 
     def test_unknown_payload_is_not_accepted(self):
         result = _classify(127 << 8, b"FALSE_SUCCESS:127\n", 1)
