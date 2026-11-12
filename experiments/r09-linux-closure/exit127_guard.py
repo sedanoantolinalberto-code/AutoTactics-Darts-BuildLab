@@ -7,13 +7,55 @@ All children are forked by this process and directly reaped; no grandchild tests
 import ctypes
 import errno
 import os
+import platform
 import signal
 import sys
 import time
 from dataclasses import asdict, dataclass
 
 PR_SET_PDEATHSIG = 1
+PR_SET_SECCOMP = 22
+PR_SET_NO_NEW_PRIVS = 38
 MAX_ERROR_BYTES = 256
+
+def _kernel_deny_prctl_with_seccomp() -> int | None:
+    """Install a child-local classic BPF filter denying SYS_prctl with EPERM.
+
+    x86_64 only; deliberately blocks every future prctl within *this child*.
+    Returns errno on installation failure. No external processes affected.
+    """
+    if platform.machine().lower() not in ("x86_64", "amd64"):
+        return errno.ENOTSUP
+
+    class SockFilter(ctypes.Structure):
+        _fields_ = [("code", ctypes.c_ushort), ("jt", ctypes.c_ubyte),
+                    ("jf", ctypes.c_ubyte), ("k", ctypes.c_uint)]
+
+    class SockFprog(ctypes.Structure):
+        _fields_ = [("len", ctypes.c_ushort),
+                    ("filter", ctypes.POINTER(SockFilter))]
+
+    SYS_PRCTL_X86_64 = 157
+    SECCOMP_RET_ALLOW = 0x7fff0000
+    SECCOMP_RET_ERRNO = 0x00050000
+    filters = (SockFilter * 4)(
+        SockFilter(0x20, 0, 0, 0),  # BPF_LD | BPF_W | BPF_ABS, syscall nr
+        SockFilter(0x15, 1, 0, SYS_PRCTL_X86_64),  # jump if prctl
+        SockFilter(0x06, 0, 0, SECCOMP_RET_ALLOW),
+        SockFilter(0x06, 0, 0, SECCOMP_RET_ERRNO | errno.EPERM),
+    )
+    program = SockFprog(len=4, filter=filters)
+    libc = ctypes.CDLL(None, use_errno=True)
+    prctl = libc.prctl
+    prctl.argtypes = [ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong,
+                      ctypes.c_ulong, ctypes.c_ulong]
+    prctl.restype = ctypes.c_int
+    if prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1:
+        return ctypes.get_errno() or errno.EPERM
+    if prctl(PR_SET_SECCOMP, 2, ctypes.addressof(program), 0, 0) == -1:
+        return ctypes.get_errno() or errno.EPERM
+    return None
+
 
 
 @dataclass(frozen=True)
@@ -57,6 +99,8 @@ def _classify(status: int, error_bytes: bytes, elapsed_ms: int) -> Outcome:
             return Outcome("PDEATHSIG_SETUP_FAILED", None, None, int(parts[1]), elapsed_ms)
         if parts[0] == b"PARENT_CHANGED":
             return Outcome("PARENT_IDENTITY_CHANGED", None, None, int(parts[1]), elapsed_ms)
+        if parts[0] == b"SECCOMP":
+            return Outcome("SECCOMP_INSTALL_FAILED", None, None, int(parts[1]), elapsed_ms)
         if parts[0] == b"EXECV":
             return Outcome("EXEC_SETUP_FAILED", None, None, int(parts[1]), elapsed_ms)
         return Outcome("MALFORMED_SETUP_REPORT", None, None, None, elapsed_ms)
@@ -75,6 +119,7 @@ def run_guarded(
     timeout_seconds: float = 3.0,
     inject_setup_errno: int | None = None,
     inject_parent_mismatch: bool = False,
+    deny_prctl_with_real_seccomp: bool = False,
 ) -> Outcome:
     if not sys.platform.startswith("linux"):
         raise RuntimeError("BLOCKED: linux-only")
@@ -101,6 +146,10 @@ def run_guarded(
             os.set_blocking(write_fd, True)
             if inject_setup_errno is not None:
                 _report_and_exit(write_fd, b"PDEATHSIG", inject_setup_errno)
+            if deny_prctl_with_real_seccomp:
+                seccomp_error = _kernel_deny_prctl_with_seccomp()
+                if seccomp_error is not None:
+                    _report_and_exit(write_fd, b"SECCOMP", seccomp_error)
             setup_error = _prctl_pdeathsig_or_errno()
             if setup_error is not None:
                 _report_and_exit(write_fd, b"PDEATHSIG", setup_error)
