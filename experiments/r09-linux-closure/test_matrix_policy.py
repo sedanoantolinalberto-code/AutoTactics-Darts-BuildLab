@@ -1,6 +1,8 @@
 """Synthetic tests ONLY: no claims about real T21-R09 suites."""
 import copy
 import hashlib
+import os
+import time
 import tempfile
 import unittest
 from pathlib import Path
@@ -122,6 +124,51 @@ class MatrixTests(unittest.TestCase):
 
     def test_unhashable_suite_name_must_not_raise(self):
         self.doc["suites"][0]["name"] = ["official"]
+        self.blocked(self.doc)
+
+    def test_fifo_log_rejected_without_writer_or_hang(self):
+        path = self.root / "synthetic-r07.log"
+        path.unlink()
+        os.mkfifo(path)
+        start = time.monotonic()
+        self.blocked(self.doc)
+        self.assertLess(time.monotonic() - start, 0.8, "Opening FIFO blocked the verifier")
+
+    def test_symlink_log_rejected_even_if_target_is_valid(self):
+        path = self.root / "synthetic-r07.log"
+        target = self.root / "good-data.log"
+        path.rename(target)
+        path.symlink_to(target)
+        self.blocked(self.doc)
+
+    def test_intermediate_symlink_directory_rejected(self):
+        real = self.root / "real"
+        real.mkdir()
+        (real / "log.txt").write_bytes(b"safe")
+        (self.root / "alias").symlink_to(real, target_is_directory=True)
+        self.doc["suites"][0]["log_path"] = "alias/log.txt"
+        self.doc["suites"][0]["log_sha256"] = hashlib.sha256(b"safe").hexdigest()
+        self.blocked(self.doc)
+
+    def test_oversized_log_is_rejected(self):
+        path = self.root / "synthetic-r07.log"
+        big = b"A" * 2_000_001
+        path.write_bytes(big)
+        self.doc["suites"][2]["log_sha256"] = hashlib.sha256(big).hexdigest()
+        self.blocked(self.doc)
+
+    def test_valid_nested_log_still_works(self):
+        subdir = self.root / "nested"
+        subdir.mkdir()
+        payload = b"NESTED SYNTHETIC TEST ONLY\n"
+        (subdir / "log.txt").write_bytes(payload)
+        self.doc["suites"][0]["log_path"] = "nested/log.txt"
+        self.doc["suites"][0]["log_sha256"] = hashlib.sha256(payload).hexdigest()
+        result = self.result()
+        self.assertEqual(result["status"], "SYNTHETIC_COMPLETE_LOCAL_BATCHED_UNQUALIFIED_PASS")
+
+    def test_null_log_path_is_rejected(self):
+        self.doc["suites"][0]["log_path"] = None
         self.blocked(self.doc)
 
     def test_invalid_receipt_object_is_blocked(self):
