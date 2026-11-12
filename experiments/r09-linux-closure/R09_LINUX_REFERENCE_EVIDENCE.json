@@ -1,0 +1,234 @@
+{
+  "schema": "engineyt-r09-linux-reference-evidence/0.1",
+  "classification": "REVIEW_ONLY_REFERENCE_NOT_T21_R09",
+  "branch": "review/engineyt-r09-linux-closure-r5-r7-20261112",
+  "observed_runs": [
+    {
+      "run_id": 43143903822,
+      "scope": "reference tests runner UID1001",
+      "tests": 34,
+      "passed": 33,
+      "errors": 1,
+      "conclusion": "failure",
+      "defect": "unhashable suite name raises TypeError"
+    },
+    {
+      "run_id": 43143981805,
+      "scope": "reference tests UID1001 and root",
+      "tests": 68,
+      "passed": 68,
+      "errors": 0,
+      "conclusion": "success"
+    },
+    {
+      "run_id": 43144282009,
+      "scope": "reference tests UID1001 root UID65534 with actual seccomp EPERM",
+      "tests": 105,
+      "passed": 105,
+      "errors": 0,
+      "conclusion": "success"
+    },
+    {
+      "run_id": 43144576938,
+      "job_id": 130939271732,
+      "scope": "reference tests UID1001 root UID65534 including FIFO and symlink adversarial checks",
+      "tests": 123,
+      "passed": 123,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success"
+    },
+    {
+      "run_id": 43145127555,
+      "job_id": 130941059554,
+      "scope": "reference tests plus native PDEATHSIG fork/UID-drop counterexamples",
+      "tests": 127,
+      "passed": 127,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success",
+      "uid_breakdown": [
+        {
+          "uid": 1001,
+          "reference": 41,
+          "kernel": 1
+        },
+        {
+          "uid": 0,
+          "reference": 41,
+          "kernel": 2
+        },
+        {
+          "uid": 65534,
+          "reference": 41,
+          "kernel": 1
+        }
+      ]
+    },
+    {
+      "run_id": 43149639661,
+      "job_id": 130955513515,
+      "scope": "reference F1 regression: exact JSONL per-case log recounts replacing trusted declared counts",
+      "tests": 163,
+      "passed": 163,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success",
+      "uid_breakdown": [
+        {
+          "uid": 1001,
+          "reference": 53,
+          "kernel": 1
+        },
+        {
+          "uid": 0,
+          "reference": 53,
+          "kernel": 2
+        },
+        {
+          "uid": 65534,
+          "reference": 53,
+          "kernel": 1
+        }
+      ],
+      "qualifier": "Test count includes synthetic policy fixtures; not original T21-R09"
+    },
+    {
+      "run_id": 43149857202,
+      "job_id": 130956210155,
+      "scope": "reference F1+F2: log recount and disjoint timeout/protocol reason",
+      "tests": 172,
+      "passed": 172,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success",
+      "uid_breakdown": [
+        {
+          "uid": 1001,
+          "reference": 56,
+          "kernel": 1
+        },
+        {
+          "uid": 0,
+          "reference": 56,
+          "kernel": 2
+        },
+        {
+          "uid": 65534,
+          "reference": 56,
+          "kernel": 1
+        }
+      ],
+      "qualifier": "Test count includes synthetic policy fixtures; not original T21-R09"
+    },
+    {
+      "run_id": 43150302615,
+      "job_id": 130957625846,
+      "scope": "PR16 F1+F2 plus duplicate JSON keys and fail-closed unauthenticated native provenance",
+      "tests": 175,
+      "passed": 175,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success",
+      "uid_breakdown": [
+        {
+          "uid": 1001,
+          "reference": 57,
+          "kernel": 1
+        },
+        {
+          "uid": 0,
+          "reference": 57,
+          "kernel": 2
+        },
+        {
+          "uid": 65534,
+          "reference": 57,
+          "kernel": 1
+        }
+      ],
+      "qualification": "REFERENCE_ONLY; mixed synthetic policies and isolated native launch tests"
+    },
+    {
+      "run_id": 43227459936,
+      "job_id": 131214225596,
+      "scope": "F3 four expected-failing red adversarial tests on old code",
+      "tests_per_uid_attempted": 61,
+      "uid_before_abort": 1001,
+      "failures_in_red_campaign": 4,
+      "conclusion": "failure",
+      "qualification": "intentional RED CI; no official T21 tests"
+    },
+    {
+      "run_id": 43227649204,
+      "job_id": 131214902877,
+      "scope": "F3 suite case-ID manifest + duplicate log reference policy",
+      "tests": 187,
+      "passed": 187,
+      "errors": 0,
+      "skipped": 0,
+      "conclusion": "success",
+      "uid_breakdown": [
+        {
+          "uid": 1001,
+          "reference": 61,
+          "kernel": 1
+        },
+        {
+          "uid": 0,
+          "reference": 61,
+          "kernel": 2
+        },
+        {
+          "uid": 65534,
+          "reference": 61,
+          "kernel": 1
+        }
+      ],
+      "qualification": "REFERENCE_ONLY; synthetic lab IDs are not authenticated T21 case manifest"
+    }
+  ],
+  "sources": [
+    "experiments/r09-linux-closure/exit127_guard.py",
+    "experiments/r09-linux-closure/test_exit127_guard.py",
+    "experiments/r09-linux-closure/matrix_policy.py",
+    "experiments/r09-linux-closure/test_matrix_policy.py"
+  ],
+  "last_test_commit": "96f72239b50889c97c8144ba61dd890e69848e39",
+  "actual_seccomp_kernel_denial_observed": true,
+  "test_cases_per_uid": {
+    "reference_launcher": 15,
+    "synthetic_matrix": 26,
+    "total": 41
+  },
+  "official_t21_r09_suites_executed": 0,
+  "real_cgroup_v2_delegation_tests_executed": 0,
+  "qualified_full_descendant_containment": false,
+  "linux_gate": "BLOCKED",
+  "r17_e5b4d": "NO-GO",
+  "tb09_g3": "BLOCKED",
+  "rendering_go": false,
+  "publishing_go": false,
+  "production_integrated": false,
+  "explicit_caveat": "Test observations pertain only to a reference lab; Claudes local R09 commits and T21 packages were not in this GitHub branch.",
+  "native_pdeathsig_fork_noninheritance_observed": true,
+  "native_pdeathsig_uid_drop_clears_observed": true,
+  "external_custodian_qualified": false,
+  "f1_autodeclared_counts_rejected": true,
+  "f2_timeout_distinguished_from_protocol_failure": true,
+  "receipt_schema_current": "engineyt-r09-suite-receipts/0.3",
+  "test_result_log_schema": "engineyt-r09-case-result/0.1",
+  "latest_per_uid": {
+    "reference_launcher": 18,
+    "synthetic_matrix": 43,
+    "reference_total": 61
+  },
+  "source_provenance_authenticated": false,
+  "skip_selection_note": "127/127 run selected one native kernel fork test for UID 65534 and did NOT run root-only uid-drop test under UID 65534. Claude independently ran the complete kernel class under UID 65534, yielding one expected SKIP; these are different test selections.",
+  "duplicate_json_fields_rejected": true,
+  "unattested_native_result_cannot_pass": true,
+  "f3_fabricated_case_ids_rejected_in_reference_lab": true,
+  "f3_duplicate_log_path_or_hash_rejected": true,
+  "native_source_commit_and_executor_attestation": false,
+  "qualification": false
+}

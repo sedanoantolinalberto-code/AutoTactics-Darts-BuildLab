@@ -1,0 +1,68 @@
+name: EngineYT R09 Linux reference closure (review only)
+
+on:
+  push:
+    branches:
+      - review/engineyt-r09-linux-closure-r5-r7-20261112
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  linux-r09-reference:
+    if: github.event_name == 'push' || github.head_ref == 'review/engineyt-r09-linux-closure-r5-r7-20261112'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Show kernel, UID and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          uname -a
+          python3 --version
+          id -u
+          git rev-parse HEAD
+      - name: Execute Linux reference R09-5 and synthetic R09-6 unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/r09-linux-closure
+          python3 -m unittest -v test_exit127_guard test_matrix_policy
+      - name: Observe native PDEATHSIG fork semantics (runner UID)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/r09-linux-closure
+          python3 -m unittest -v test_kernel_semantics.KernelPdeathsigTests.test_grandchild_does_not_inherit_pdeathsig
+      - name: Repeat reference tests under root UID 0 (NOT T21-R09 official root matrix)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd experiments/r09-linux-closure
+          sudo env PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_exit127_guard test_matrix_policy
+          sudo env PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_kernel_semantics
+      - name: Execute isolated reference tests as uid 65534 (NOT T21-R09 official unprivileged matrix)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(id -u nobody)" = "65534"
+          tmpdir="$(mktemp -d /tmp/engineyt-r09-nobody.XXXXXX)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          cp experiments/r09-linux-closure/exit127_guard.py "$tmpdir/"
+          cp experiments/r09-linux-closure/test_exit127_guard.py "$tmpdir/"
+          cp experiments/r09-linux-closure/matrix_policy.py "$tmpdir/"
+          cp experiments/r09-linux-closure/test_matrix_policy.py "$tmpdir/"
+          cp experiments/r09-linux-closure/test_kernel_semantics.py "$tmpdir/"
+          chmod 755 "$tmpdir"
+          chmod 644 "$tmpdir"/*.py
+          cd "$tmpdir"
+          sudo -u nobody env PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_exit127_guard test_matrix_policy
+          sudo -u nobody env PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_kernel_semantics.KernelPdeathsigTests.test_grandchild_does_not_inherit_pdeathsig
