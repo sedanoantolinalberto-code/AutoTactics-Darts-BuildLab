@@ -36,8 +36,8 @@ def main():
     offset=0
     result={}
     while offset<len(raw):
-        nul=raw.index(b"\\x00",offset)
-        end=raw.index(b"\\n",nul+1)
+        nul=raw.index(b"\x00",offset)
+        end=raw.index(b"\n",nul+1)
         name=raw[offset:nul].decode("ascii")
         length=int(raw[nul+1:end].decode("ascii"))
         assert name in EXPECTED and name not in result and 0<length<20000,"unsupported source entry"
