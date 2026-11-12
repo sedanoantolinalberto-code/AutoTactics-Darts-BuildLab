@@ -1,0 +1,81 @@
+name: EngineYT B40 repeated original Windows V8 (review only)
+
+on:
+  push:
+    branches:
+      - review/windows-gate-v8-b40-repeated-20261112
+  pull_request:
+    branches:
+      - review/windows-gate-v8-handle-fix-b39-20261112
+
+permissions:
+  contents: read
+
+jobs:
+  b40-v8-repeat:
+    if: github.event_name == 'push' || github.head_ref == 'review/windows-gate-v8-b40-repeated-20261112'
+    strategy:
+      fail-fast: false
+      matrix:
+        windows: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.windows }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+          architecture: x64
+      - name: Record OS and commit
+        run: |
+          python --version
+          python -c "import platform;print(platform.platform())"
+          git rev-parse HEAD
+      - name: Verify original sources and apply the exact B39 fix
+        run: |
+          python experiments/windows-gate-v8-original/extract_exact_sources.py
+          if ($LASTEXITCODE -ne 0) { exit 2 }
+          python experiments/windows-gate-v8-original/apply_b39_handle_fix.py
+          if ($LASTEXITCODE -ne 0) { exit 2 }
+          Copy-Item experiments/windows-gate-v8-original/verify_windows_v8_evidence.py experiments/windows-gate-v8-original/native/verify_windows_v8_evidence.py
+      - name: Repeat 17 original cases three times with B25 verification
+        run: |
+          $ErrorActionPreference = 'Continue'
+          cd experiments/windows-gate-v8-original/native
+          for ($i = 1; $i -le 3; $i++) {
+            Write-Output "B40_REPETITION_START=$i"
+            python -c "import windows_gate_v8,sys;sys.exit(windows_gate_v8.main())" *> "./v8_repeat_${i}.log"
+            $gateExit = $LASTEXITCODE
+            Get-Content "./v8_repeat_${i}.log"
+            if (Test-Path "./windows_gate_v8_result.json") {
+              Copy-Item "./windows_gate_v8_result.json" "./v8_repeat_${i}.json"
+              python verify_windows_v8_evidence.py "./v8_repeat_${i}.json" --source-dir . *> "./b25_repeat_${i}.log"
+              $verifyExit = $LASTEXITCODE
+              Get-Content "./b25_repeat_${i}.log"
+            } else {
+              $verifyExit = 2
+              Write-Output "B40_REPORT_MISSING_$i"
+            }
+            Write-Output "B40_REPETITION_RESULT=$i;GATE=$gateExit;B25=$verifyExit"
+            if ($gateExit -ne 0 -or $verifyExit -ne 0) {
+              Write-Output "B40_FAIL_CLOSED_REPEAT_$i"
+              exit 1
+            }
+          }
+          Write-Output "B40_RESULT THREE_REPEATS_SEVENTEEN_PER_HOST_PASS_LIMITED"
+      - name: Preserve evidence on both success and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineyt-b40-${{ matrix.windows }}-${{ github.sha }}
+          path: |
+            experiments/windows-gate-v8-original/native/v8_repeat_*.log
+            experiments/windows-gate-v8-original/native/v8_repeat_*.json
+            experiments/windows-gate-v8-original/native/b25_repeat_*.log
+          if-no-files-found: warn
+          retention-days: 30
