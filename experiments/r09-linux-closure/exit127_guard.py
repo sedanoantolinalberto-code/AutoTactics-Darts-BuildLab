@@ -112,6 +112,15 @@ def _classify(status: int, error_bytes: bytes, elapsed_ms: int) -> Outcome:
     return Outcome("UNEXPECTED_WAIT_STATUS", None, None, None, elapsed_ms)
 
 
+def _deadline_outcome(status: int | None, oversized_report: bool, elapsed_ms: int) -> Outcome:
+    """Disjoint fail-closed reasons; absence of EOF cannot imply test success."""
+    if oversized_report:
+        return Outcome("MALFORMED_SETUP_REPORT", None, None, None, elapsed_ms)
+    if status is None:
+        return Outcome("TEST_TIMEOUT", None, None, None, elapsed_ms)
+    return Outcome("SETUP_PIPE_EOF_MISSING", None, None, None, elapsed_ms)
+
+
 def run_guarded(
     executable: str,
     argv: list[str],
@@ -166,6 +175,7 @@ def run_guarded(
         pieces = bytearray()
         eof = False
         status = None
+        oversized_report = False
         while time.monotonic() - start < timeout_seconds:
             try:
                 b = os.read(read_fd, 256)
@@ -174,7 +184,8 @@ def run_guarded(
                 else:
                     pieces.extend(b)
                     if len(pieces) > MAX_ERROR_BYTES:
-                        # Report size abuse is fail-closed.
+                        # Report size abuse is fail-closed, not a timeout.
+                        oversized_report = True
                         break
             except BlockingIOError:
                 pass
@@ -196,8 +207,8 @@ def run_guarded(
                 pass
             os.waitpid(pid, 0)
             waited = True
-        return Outcome("TIMEOUT_OR_PROTOCOL_FAILURE", None, None, None,
-                       int((time.monotonic() - start) * 1000))
+        return _deadline_outcome(status, oversized_report,
+                                 int((time.monotonic() - start) * 1000))
     finally:
         if pid is not None and pid > 0 and not waited:
             # Never leave an owned child behind if the reader itself fails.
