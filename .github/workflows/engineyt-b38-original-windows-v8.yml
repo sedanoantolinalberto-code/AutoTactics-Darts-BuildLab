@@ -1,19 +1,19 @@
-name: EngineYT B38 Original B23-B25 Gate V8 (review only)
+name: EngineYT B39 patched original Gate V8 (review only)
 
 on:
   push:
     branches:
-      - review/windows-gate-v8-original-b38-20261112
+      - review/windows-gate-v8-handle-fix-b39-20261112
   pull_request:
     branches:
-      - s34/windows-off-v025-link-only
+      - review/windows-gate-v8-original-b38-20261112
 
 permissions:
   contents: read
 
 jobs:
-  original-v8:
-    if: github.event_name == 'push' || github.head_ref == 'review/windows-gate-v8-original-b38-20261112'
+  b39-patched-v8:
+    if: github.event_name == 'push' || github.head_ref == 'review/windows-gate-v8-handle-fix-b39-20261112'
     runs-on: ${{ matrix.windows }}
     strategy:
       fail-fast: false
@@ -40,15 +40,19 @@ jobs:
         run: |
           python experiments/windows-gate-v8-original/extract_exact_sources.py
           if ($LASTEXITCODE -ne 0) { exit 2 }
+          python experiments/windows-gate-v8-original/apply_b39_handle_fix.py
+          if ($LASTEXITCODE -ne 0) { exit 2 }
           Copy-Item experiments/windows-gate-v8-original/verify_windows_v8_evidence.py experiments/windows-gate-v8-original/native/verify_windows_v8_evidence.py
           cd experiments/windows-gate-v8-original/native
           python -c "import unittest,windows_gate_v8; assert unittest.defaultTestLoader.loadTestsFromTestCase(windows_gate_v8.WindowsGateV8).countTestCases()==17; print('ORIGINAL_GATE_V8_17_CASES_DETECTED')"
           if ($LASTEXITCODE -ne 0) { exit 2 }
-      - name: Execute exactly the 17 original Windows V8 cases
+          python -c "import ctypes;from windows_joblist_launcher import _handle_value;assert _handle_value(ctypes.c_void_p()) == 0;assert _handle_value(None)==0;assert _handle_value(ctypes.c_void_p(123))==123;print('B39_NULL_HANDLE_REGRESSION_PASS')"
+          if ($LASTEXITCODE -ne 0) { exit 2 }
+      - name: Execute the 17 V8 scenarios on the B39 patched candidate
         run: |
           $ErrorActionPreference = "Continue"
           cd experiments/windows-gate-v8-original/native
-          python ./windows_gate_v8.py *> ./v8_native_full.log
+          python -c "import windows_gate_v8,sys;sys.exit(windows_gate_v8.main())" *> ./v8_native_full.log
           $gateExit = $LASTEXITCODE
           Get-Content ./v8_native_full.log
           Write-Output "V8_NATIVE_GATE_EXIT=$gateExit"
@@ -66,7 +70,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: engineyt-v8-${{ matrix.windows }}-${{ github.sha }}
+          name: engineyt-b39-v8-${{ matrix.windows }}-${{ github.sha }}
           path: |
             experiments/windows-gate-v8-original/native/windows_gate_v8_result.json
             experiments/windows-gate-v8-original/native/v8_native_full.log
