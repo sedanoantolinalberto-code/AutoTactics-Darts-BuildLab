@@ -102,10 +102,12 @@ que las 43 pruebas ejecutadas por Claude fueron «43 PASS».
 - \`43149857202\`: 56 pruebas de referencia por UID + cuatro
   pruebas de kernel seleccionadas = **172 PASS**, 0 FAIL,
   0 SKIP. Incluye test adversarial F1 y clasificación F2.
-- Una campaña posterior valida además rechazo de claves JSON
-  duplicadas y recibos nativos autodeclarados, cuyo identificador
-  y recuento deben consultarse en los logs del runner antes de
-  consignar un resultado.
+- \`43150302615\`: 57 pruebas de referencia por UID + cuatro
+  de kernel seleccionadas = **175/175 PASS**, 0 FAIL, 0 SKIP;
+  job \`130957625846\`, código \`3717beb907f88aa62cb5e4cfb991ec63d26b3ad4\`.
+  Se comprobó el log completo: rechazo de claves JSON duplicadas,
+  bloqueo de los recibos \`OBSERVED_NATIVE\` no autenticados y
+  las regresiones F1/F2.
 
 Estas son **pruebas del laboratorio** (gran parte de matrices
 sintéticas), no las 748 pruebas de T21.
