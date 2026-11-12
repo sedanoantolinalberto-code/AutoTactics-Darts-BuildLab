@@ -14,7 +14,11 @@ permissions:
 jobs:
   windows-joblist-probe:
     if: github.event_name == 'push' || github.head_ref == 'review/windows-joblist-native-probe-b31-20261112'
-    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        windows: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.windows }}
     timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
