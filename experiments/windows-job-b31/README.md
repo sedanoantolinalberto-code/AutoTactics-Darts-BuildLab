@@ -41,3 +41,16 @@ dotnet run --project experiments/windows-job-b31/WindowsJobProbe.csproj --config
 ```
 
 Use disposable Windows environment (CI or an isolated machine); the program starts and terminates only its own child processes. Avoid manual production deployment.
+
+## B33 — native continuation, 2026-11-12
+
+Complementary Windows reference test cases:
+
+- `explicit-breakaway-denied-by-job-policy`: inside the configured Job, a child requests `CREATE_BREAKAWAY_FROM_JOB`. The test requires a denial and a recorded Win32 error, not a successfully detached process.
+- `twenty-atomic-creation-close-repetitions`: 20 serial iterations with atomic Job association, `ResumeThread`, last-handle close and termination of the owned process.
+
+Verified GitHub Actions: run `43141038835`, job `130927798701`, test commit `b9a86f45771ccfb4c8307500ae96672637476bf4`. Windows Server 2022 native job completed **SUCCESS**, log reports `B31_RESULT pass=9 fail=0 total=9 scope=native-windows-probe-not-gate-v8`.
+
+Evidence interpretation: **9/9 independent reference scenarios**, including 20 repetitions within one scenario, **not 29 separate test scenarios**. The 17 original B23–B25 Gate V8 scenarios remain **0/17 executed** and the original supervisor is not qualified by these reference tests.
+
+No code changes outside this review-only branch; no release, render or publish permission.
