@@ -28,8 +28,8 @@ En este laboratorio Linux de un solo hilo:
 - Se mata/recolecta únicamente al **hijo directamente creado por el laboratorio**.
 
 **Importante:** la inyección de \`EPERM\` y \`ENOSYS\` es una prueba del
-protocolo. No equivale a una denegación real por seccomp del kernel. Para
-calificar el comportamiento se requiere un test de seccomp real y revisar las
+protocolo. No equivale a una denegación real por seccomp del kernel. Se ha añadido después una prueba de seccomp real sobre un proceso desechable. Para
+calificar el supervisor T21 se requiere repetirla sobre su código, no este prototipo; también y revisar las
 carreras de fallo antes de \`execv\`; el pipe por sí solo no es prueba formal.
 
 Este código usa \`os.fork\` en una aplicación monohilo; no se propone incorporarlo
@@ -113,3 +113,37 @@ matrices NO deben sumarse a los recuentos de R09.
 
 **Prohibido:** usar estos resultados como sustituto de la auditoría de Claude
 o de las pruebas 634 + 49 + 13 + 14 de T21.
+
+
+## Evidencia CI nativa del laboratorio de referencia — 12 noviembre 2026
+
+GitHub Actions \`ubuntu-24.04\`, Linux x86_64, Python 3, rama
+\`review/engineyt-r09-linux-closure-r5-r7-20261112\`.
+
+- Primera campaña: run \`43143903822\`, **33/34 PASS + 1 ERROR**; el
+  agregador lanzaba \`TypeError\` ante un nombre de suite no hashable.
+- Corrección aislada: run \`43143981805\`, **34/34 PASS** con UID 1001
+  y **34/34 PASS** con UID 0.
+- Denegación kernel seccomp y modalidad UID 65534 incorporadas: run
+  \`43144282009\`, **35/35 PASS** en cada UID 1001, 0 y 65534.
+  El test \`test_real_kernel_seccomp_denies_prctl\` aplica un filtro
+  seccomp-BPF *solo al hijo de laboratorio* y observa que el kernel
+  devuelve \`EPERM\` para \`PR_SET_PDEATHSIG\`.
+- Endurecimiento de lectura de logs ante FIFO, symlinks, límites de tamaño
+  y rutas anidadas: run \`43144576938\`, **41/41 PASS** en cada modalidad,
+  **123/123 PASS**, 0 errores y 0 pruebas omitidas, log recuperado.
+- El test del filtro seccomp se limita a x86_64 y no valida una política
+  de aislamiento general; no es un sandbox ni la campaña de Claude.
+
+En los 123 casos de la última ejecución, **26 por modalidad son pruebas
+de política del agregador con datos sintéticos**, y **15 por modalidad son
+pruebas del lanzador de referencia**. No deben contabilizarse como 123
+ejecuciones de T21-R09.
+
+La lectura de logs mediante descriptores evita volver a abrir por nombre
+tras la validación del tipo de archivo. La prueba de FIFO sin escritor
+comprueba explícitamente que la lectura no se bloquee.
+
+**Bloqueos no resueltos:** custodia de descendientes tras cambios de
+credenciales, cgroup v2 delegado y custodia externa bajo fallos simultáneos.
+R17/E5B4D NO-GO, TB09/G3 BLOCKED. Sin promoción a producción.
