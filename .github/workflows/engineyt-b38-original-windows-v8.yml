@@ -52,7 +52,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Continue"
           cd experiments/windows-gate-v8-original/native
-          python ./windows_gate_v8.py *> ./v8_native_full.log
+          python -c "import windows_gate_v8,sys;sys.exit(windows_gate_v8.main())" *> ./v8_native_full.log
           $gateExit = $LASTEXITCODE
           Get-Content ./v8_native_full.log
           Write-Output "V8_NATIVE_GATE_EXIT=$gateExit"
