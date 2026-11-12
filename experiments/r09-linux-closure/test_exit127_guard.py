@@ -1,6 +1,7 @@
 """Single-thread Linux tests for a *reference* R09-5 error protocol (not T21)."""
 import errno
 import os
+import platform
 import signal
 import sys
 import unittest
@@ -30,6 +31,17 @@ class Exit127Tests(unittest.TestCase):
         result = run_guarded(sys.executable, [sys.executable, "-c", "import sys;sys.exit(127)"],
                              inject_setup_errno=errno.EPERM)
         self.assertEqual(result.kind, "PDEATHSIG_SETUP_FAILED")
+        self.assertEqual(result.setup_errno, errno.EPERM)
+        self.assertIsNone(result.exit_code)
+
+    @unittest.skipUnless(platform.machine().lower() in ("x86_64", "amd64"),
+                         "Classic seccomp probe targets x86_64")
+    def test_real_kernel_seccomp_denies_prctl(self):
+        # This is a child-only kernel BPF filter, not a mock. If the host
+        # refuses filter installation the lab must report BLOCKED, not PASS.
+        result = run_guarded(sys.executable, [sys.executable, "-c", "import sys;sys.exit(127)"],
+                             deny_prctl_with_real_seccomp=True)
+        self.assertEqual(result.kind, "PDEATHSIG_SETUP_FAILED", result)
         self.assertEqual(result.setup_errno, errno.EPERM)
         self.assertIsNone(result.exit_code)
 
