@@ -1,0 +1,40 @@
+name: EngineYT B41 custody STATIC ONLY (review only)
+
+on:
+  push:
+    branches:
+      - review/b10-custody-static-safety-b41-20261113
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  b41-static-checker:
+    if: github.event_name == 'push' || github.head_ref == 'review/b10-custody-static-safety-b41-20261113'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Record immutable CI identity
+        run: |
+          set -euo pipefail
+          python3 --version
+          id -u
+          git rev-parse HEAD
+      - name: Parse-only synthetic tests (NO CUSTODY OR NATIVE CODE)
+        working-directory: experiments/b10-static-safety
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v test_b10_static_screen
+      - name: Screen the scanner itself without importing candidate code
+        run: |
+          set -euo pipefail
+          python3 experiments/b10-static-safety/b10_static_screen.py experiments/b10-static-safety/b10_static_screen.py
+          echo 'B41_STATIC_ONLY_PASS_NOT_NATIVE_ATTESTATION'
