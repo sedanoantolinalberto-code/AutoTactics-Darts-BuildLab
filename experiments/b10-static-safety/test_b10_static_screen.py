@@ -44,6 +44,26 @@ class StaticSafetyTests(unittest.TestCase):
     def test_killpg_current_group_blocked(self):
         self.assertIn("BROAD_PROCESS_GROUP", self.codes("import os\nos.killpg(0, 9)\n"))
 
+    def test_getattr_kill_indirection_detected(self):
+        self.assertIn("BROAD_SIGNAL_TARGET",
+                      self.codes("getattr(os, 'kill')(-1, 9)\n"))
+
+    def test_getattr_unshare_indirection_detected(self):
+        self.assertIn("UNSHARE_ZERO_NO_NAMESPACE",
+                      self.codes("getattr(libc, 'unshare')(0)\n"))
+
+    def test_shell_true_requires_review(self):
+        self.assertIn("SHELL_INVOCATION_REQUIRES_REVIEW",
+                      self.codes("subprocess.run(['echo', 'hi'], shell=True)\n"))
+
+    def test_system_shell_invocation_requires_review(self):
+        self.assertIn("SHELL_INVOCATION_REQUIRES_REVIEW",
+                      self.codes("os.system('echo hi')\n"))
+
+    def test_dynamic_process_group_requires_ownership_proof(self):
+        self.assertIn("PROCESS_GROUP_OWNERSHIP_UNVERIFIED",
+                      self.codes("os.killpg(group_id, 9)\n"))
+
     def test_unshare_zero_blocked(self):
         self.assertIn("UNSHARE_ZERO_NO_NAMESPACE", self.codes("libc.unshare(0)\n"))
 
@@ -75,9 +95,9 @@ class StaticSafetyTests(unittest.TestCase):
             self.assertFalse(result["native_test_authorized"])
             self.assertFalse(result["production_go"])
 
-    def test_valid_group_kill_by_specific_id_not_flagged(self):
-        # Absence of a finding is *not* a proof that pid is owned.
-        self.assertFalse(self.codes("os.kill(pid, 9)\n"))
+    def test_dynamic_signal_target_needs_ownership_review(self):
+        self.assertIn("SIGNAL_TARGET_OWNERSHIP_UNVERIFIED",
+                      self.codes("os.kill(pid, 9)\n"))
 
     def test_unrelated_text_is_not_evaluated_or_interpreted(self):
         fake = "print('kill(-1, SIGKILL)')\nraise RuntimeError('NOT_EXECUTED')\n"
