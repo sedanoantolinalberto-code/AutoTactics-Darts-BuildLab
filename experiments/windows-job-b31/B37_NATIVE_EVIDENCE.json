@@ -1,0 +1,43 @@
+{
+  "schema": "engineyt-windows-job-probe-B37-evidence/0.1",
+  "classification": "REVIEW_ONLY_REFERENCE_NOT_B23_B25_ORIGINAL_V8",
+  "test_code_commit": "843a2cfbdb92d1446db9742519f0b6522c741846",
+  "test_run_id": 43148437966,
+  "suite": "B31–B37 isolated C#/.NET 8 native Windows Job Objects probe",
+  "environments": [
+    {
+      "runner": "windows-2022",
+      "job_id": 130951681601,
+      "scenarios": 14,
+      "passed": 14,
+      "failed": 0,
+      "conclusion": "success",
+      "observed_stdout": "B31_RESULT pass=14 fail=0 total=14 scope=native-windows-probe-not-gate-v8"
+    },
+    {
+      "runner": "windows-2025",
+      "job_id": 130951681923,
+      "scenarios": 14,
+      "passed": 14,
+      "failed": 0,
+      "conclusion": "success",
+      "observed_stdout": "B31_RESULT pass=14 fail=0 total=14 scope=native-windows-probe-not-gate-v8"
+    }
+  ],
+  "unique_scenarios": 14,
+  "scenario_executions_total": 28,
+  "new_scenario": "six-concurrent-independent-jobs",
+  "distinct_jobs_in_new_scenario": 6,
+  "qualifying_original_v8_tests_executed_from_this_pr": 0,
+  "independent_original_v8_evidence": "B39/B40 are separately tracked in PR #18/#20; original Python Gate V8 not tested by this reference lab",
+  "real_supervisor_code_qualified": false,
+  "qualified_full_descendant_containment": false,
+  "desktop_windows_11_qualified": false,
+  "source_producer_attested": false,
+  "r17_e5b4d": "NO-GO",
+  "tb09_g3": "BLOCKED",
+  "rendering_go": false,
+  "publishing_go": false,
+  "production_integrated": false,
+  "evidence_provenance": "Connector read both completed GitHub Actions job logs and explicitly matched B31_RESULT per OS"
+}
