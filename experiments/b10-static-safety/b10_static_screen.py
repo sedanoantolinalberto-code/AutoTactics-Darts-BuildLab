@@ -68,10 +68,21 @@ def scan_source(source: str, filename: str = "<static fixture>") -> list[dict]:
         return [{"file": filename, "line": 0, "code": "SOURCE_PARSE_INVALID",
                  "detail": type(exc).__name__}]
 
+    # Basic static symbol mapping for 'from os import kill as k'.  This
+    # mapping is conservative and not a whole-program or SSA guarantee.
+    imported = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "os":
+            for alias in node.names:
+                if alias.name in ("kill", "killpg", "unshare"):
+                    imported[alias.asname or alias.name] = alias.name
+
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
         name = _name(node.func)
+        if isinstance(node.func, ast.Name):
+            name = imported.get(name, name)
         if not node.args:
             continue
         value = _int_literal(node.args[0])
