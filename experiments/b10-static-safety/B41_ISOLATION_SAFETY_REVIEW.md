@@ -67,6 +67,12 @@ flags outside 32-bit range, suspect `ctypes.c_int`/`c_uint`
 narrowing and dynamic `unshare(flags)` for review. It refuses symlinks,
 nonregular files, and oversized source files.
 
+Latest B41 CI: GitHub Actions run `43342311515`, **31/31 PASS**
+(synthetic AST screening only). The checker additionally flags simple
+top-level sentinel variables such as `custody_flags = 1 << 40`,
+`getattr(..., "kill")` indirection, shell invocation and signal targets
+whose ownership has not been independently established.
+
 It **cannot** prove these properties under runtime conditions, resolve
 arbitrary ctypes indirect calls, verify that an inner namespace is real,
 or authenticate the producer. A report with zero findings must always be
