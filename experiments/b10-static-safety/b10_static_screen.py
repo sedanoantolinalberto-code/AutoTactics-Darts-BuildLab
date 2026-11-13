@@ -26,6 +26,11 @@ def _name(node: ast.AST) -> str | None:
         return node.id
     if isinstance(node, ast.Attribute):
         return node.attr
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "getattr":
+        # Handle obvious getattr(os/libc, "kill")(-1, ...) indirection.
+        if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant):
+            if isinstance(node.args[1].value, str):
+                return node.args[1].value
     return None
 
 
@@ -123,10 +128,27 @@ def scan_source(source: str, filename: str = "<static fixture>") -> list[dict]:
             issues.append({"file": filename, "line": node.lineno,
                            "code": code, "detail": detail})
 
-        if name == "kill" and value in (-1, 0):
-            flag("BROAD_SIGNAL_TARGET", "kill(-1/0) may signal processes outside custody")
-        elif name == "killpg" and value in (-1, 0):
-            flag("BROAD_PROCESS_GROUP", "killpg(-1/0) is not an owned PID-boundary proof")
+        if name == "kill":
+            if value in (-1, 0):
+                flag("BROAD_SIGNAL_TARGET", "kill(-1/0) may signal processes outside custody")
+            else:
+                flag("SIGNAL_TARGET_OWNERSHIP_UNVERIFIED",
+                     "A PID literal or dynamic expression does not prove custody or prevent PID reuse")
+        elif name == "killpg":
+            if value in (-1, 0):
+                flag("BROAD_PROCESS_GROUP", "killpg(-1/0) is not an owned PID-boundary proof")
+            else:
+                flag("PROCESS_GROUP_OWNERSHIP_UNVERIFIED",
+                     "Process group and its creator must be independently bound")
+
+        if name in ("system", "popen"):
+            flag("SHELL_INVOCATION_REQUIRES_REVIEW",
+                 "Dynamic shell execution is not a custody proof")
+        if name in ("run", "call", "check_call", "check_output", "Popen"):
+            if any(key.arg == "shell" and isinstance(key.value, ast.Constant)
+                   and key.value.value is True for key in node.keywords):
+                flag("SHELL_INVOCATION_REQUIRES_REVIEW",
+                     "subprocess shell=True requires independent review")
 
         if name == "unshare":
             if value is None:
