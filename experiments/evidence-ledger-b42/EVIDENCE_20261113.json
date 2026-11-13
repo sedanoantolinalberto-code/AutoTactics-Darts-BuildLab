@@ -1,0 +1,179 @@
+{
+  "schema": "engineyt-independent-review-ledger/0.1",
+  "date": "2026-11-13",
+  "classification": "DOCUMENTARY_REVIEW_ONLY_NOT_RELEASE_AUTHORITY",
+  "gates": {
+    "r17_e5b4d": "NO-GO",
+    "tb09_g3": "BLOCKED",
+    "descendant_containment": "BLOCKED",
+    "rendering": false,
+    "publishing": false,
+    "production_go": false
+  },
+  "semantics": {
+    "cases": "distinct named scenarios in a suite; do not equate repeated executions with new cases",
+    "executions": "cases * repetitions + separately enumerated additional checks",
+    "attestation": "none of these self-issued reports attests independent provenance or full production custody",
+    "untracked": "Claude's B10-4 local WIP is not in GitHub; reported native passes are not represented as independent evidence here"
+  },
+  "evidence": [
+    {
+      "id": "B37-WINDOWS-JOB-REFERENCE",
+      "kind": "REFERENCE_WINDOWS_JOB_NATIVE",
+      "repo": "AutoTactics-Darts-BuildLab",
+      "pr": 15,
+      "commit": "843a2cfbdb92d1446db9742519f0b6522c741846",
+      "run_id": 43148437966,
+      "jobs": [
+        130951681601,
+        130951681923
+      ],
+      "cases": 14,
+      "repetitions": 2,
+      "additional": 0,
+      "executions": 28,
+      "passed": 28,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "platform": "windows-server-2022-2025",
+      "attestation": false,
+      "qualification": "PASS_LIMITED_REFERENCE_NOT_GATE_V8"
+    },
+    {
+      "id": "B38-ORIGINAL-V8-UNPATCHED-FAIL",
+      "kind": "ORIGINAL_WINDOWS_V8_UNPATCHED",
+      "repo": "AutoTactics-Darts-BuildLab",
+      "pr": 17,
+      "commit": "1f63e8ca0a2cfb57d84cb05646505fbc5daac942",
+      "run_id": 43221816576,
+      "jobs": [
+        131194942117,
+        131194942393
+      ],
+      "cases": 17,
+      "repetitions": 2,
+      "additional": 0,
+      "executions": 34,
+      "passed": 12,
+      "failed": 4,
+      "errors": 18,
+      "skipped": 0,
+      "platform": "windows-server-2022-2025",
+      "attestation": false,
+      "qualification": "NO_GO_NATIVE_B38"
+    },
+    {
+      "id": "B39-ORIGINAL-V8-PATCHED",
+      "kind": "ORIGINAL_WINDOWS_V8_PATCHED",
+      "repo": "AutoTactics-Darts-BuildLab",
+      "pr": 18,
+      "commit": "17ec7debdca22bfe36b8d61639f584eafe973caf",
+      "run_id": 43222548271,
+      "jobs": [
+        131197444089,
+        131197444391
+      ],
+      "cases": 17,
+      "repetitions": 2,
+      "additional": 0,
+      "executions": 34,
+      "passed": 34,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "platform": "windows-server-2022-2025",
+      "attestation": false,
+      "qualification": "PASS_LIMITED_PATCHED_WINDOWS_SERVER"
+    },
+    {
+      "id": "B40-ORIGINAL-V8-REPEATED",
+      "kind": "ORIGINAL_WINDOWS_V8_PATCHED",
+      "repo": "AutoTactics-Darts-BuildLab",
+      "pr": 20,
+      "commit": "8df6966313d6cb01d43dd78619e0c68b66db144c",
+      "run_id": 43226320336,
+      "jobs": [
+        131210317526,
+        131210317904
+      ],
+      "cases": 17,
+      "repetitions": 6,
+      "additional": 0,
+      "executions": 102,
+      "passed": 102,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "platform": "windows-server-2022-2025",
+      "attestation": false,
+      "qualification": "PASS_LIMITED_PATCHED_WINDOWS_SERVER"
+    },
+    {
+      "id": "PR16-LINUX-REFERENCE",
+      "kind": "REFERENCE_LINUX_MIXED_SYNTHETIC",
+      "repo": "AutoTactics-Darts-BuildLab",
+      "pr": 16,
+      "commit": "d626fbedd039e92788cabf9ec28c452df9376c9c",
+      "run_id": 43227946031,
+      "jobs": [
+        131215936913
+      ],
+      "cases": 61,
+      "repetitions": 3,
+      "additional": 4,
+      "executions": 187,
+      "passed": 187,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "platform": "linux-ubuntu-24.04-three-uids",
+      "attestation": false,
+      "qualification": "REFERENCE_ONLY_NOT_T21"
+    },
+    {
+      "id": "B41-CUSTODY-STATIC",
+      "kind": "STATIC_AST_ONLY",
+      "repo": "AutoTactics-Darts-BuildLab",
+      "pr": 21,
+      "commit": "8c996a617c552ef6c27295ca0678d2c1678174c5",
+      "run_id": 43342311515,
+      "jobs": [
+        131613301526
+      ],
+      "cases": 31,
+      "repetitions": 1,
+      "additional": 0,
+      "executions": 31,
+      "passed": 31,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "platform": "linux-ubuntu-24.04-static-only",
+      "attestation": false,
+      "qualification": "STATIC_SCREEN_NOT_NATIVE"
+    },
+    {
+      "id": "CHESS-B30-SOURCE",
+      "kind": "CHESS_MEDIA_SOURCE_ONLY",
+      "repo": "AutoTactics-ChessStories",
+      "pr": 22,
+      "commit": "2b32a1762cc4dc61c2341797fcc36c8eba40c26b",
+      "run_id": 43134828534,
+      "jobs": [
+        130907558422
+      ],
+      "cases": 73,
+      "repetitions": 1,
+      "additional": 0,
+      "executions": 73,
+      "passed": 73,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "platform": "node-22.23.4-source-only",
+      "attestation": false,
+      "qualification": "PASS_LIMITED_SOURCE_REVIEW"
+    }
+  ]
+}
