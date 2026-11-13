@@ -25,6 +25,22 @@ class StaticSafetyTests(unittest.TestCase):
         self.assertIn("BROAD_SIGNAL_TARGET",
                       self.codes("import ctypes\nlibc.kill(ctypes.c_int(-1), 9)\n"))
 
+    def test_reported_incident_literal_saved_in_variable_detected(self):
+        code = self.codes("custody_flags = 1 << 40\nlibc.unshare(custody_flags)\n")
+        self.assertIn("UNSHARE_FLAG_OUT_OF_RANGE", code)
+
+    def test_symbolic_all_processes_signal_detected(self):
+        code = self.codes("ALL = -1\nos.kill(ALL, 9)\n")
+        self.assertIn("BROAD_SIGNAL_TARGET", code)
+
+    def test_symbolic_ctypes_narrowing_detected(self):
+        code = self.codes("custody_flags = 1 << 40\nctypes.c_int(custody_flags)\n")
+        self.assertIn("C_INT_NARROWING", code)
+
+    def test_reassigned_constant_downgrades_to_manual_review(self):
+        code = self.codes("custody_flags = 1 << 40\ncustody_flags = 1 << 29\nlibc.unshare(custody_flags)\n")
+        self.assertIn("DYNAMIC_UNSHARE_REQUIRES_REVIEW", code)
+
     def test_killpg_current_group_blocked(self):
         self.assertIn("BROAD_PROCESS_GROUP", self.codes("import os\nos.killpg(0, 9)\n"))
 
