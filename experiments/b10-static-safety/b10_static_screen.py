@@ -29,18 +29,20 @@ def _name(node: ast.AST) -> str | None:
     return None
 
 
-def _int_literal(node: ast.AST, depth: int = 0) -> int | None:
+def _int_literal(node: ast.AST, depth: int = 0, constants: dict | None = None) -> int | None:
     """Conservative integer expression evaluation, never Python eval()."""
     if depth > 8:
         return None
     if isinstance(node, ast.Constant) and type(node.value) is int:
         return node.value
+    if isinstance(node, ast.Name) and constants is not None:
+        return constants.get(node.id)
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
-        inner = _int_literal(node.operand, depth + 1)
+        inner = _int_literal(node.operand, depth + 1, constants)
         return None if inner is None else (-inner if isinstance(node.op, ast.USub) else inner)
     if isinstance(node, ast.BinOp):
-        a = _int_literal(node.left, depth + 1)
-        b = _int_literal(node.right, depth + 1)
+        a = _int_literal(node.left, depth + 1, constants)
+        b = _int_literal(node.right, depth + 1, constants)
         if a is None or b is None or abs(a) > 2**65 or abs(b) > 2**65:
             return None
         if isinstance(node.op, ast.LShift) and 0 <= b <= 64:
@@ -55,8 +57,38 @@ def _int_literal(node: ast.AST, depth: int = 0) -> int | None:
             return a - b
     if isinstance(node, ast.Call) and len(node.args) == 1 and not node.keywords:
         if _name(node.func) in ("c_int", "c_uint", "c_ulong", "int"):
-            return _int_literal(node.args[0], depth + 1)
+            return _int_literal(node.args[0], depth + 1, constants)
     return None
+
+
+def _top_level_constant_assignments(tree: ast.Module) -> dict[str, int]:
+    """Resolve simple one-time literal assignments without importing source.
+
+    Only direct top-level assignments are considered. Mutations via aliases,
+    functions, exec, globals(), threads or native calls are outside scope.
+    """
+    seen = set()
+    repeated = set()
+    possible = {}
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            targets = [t.id for t in node.targets if isinstance(t, ast.Name)]
+            value = _int_literal(node.value)
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            targets = [node.target.id]
+            value = _int_literal(node.value) if node.value is not None else None
+        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
+            targets = [node.target.id]
+            value = None
+        else:
+            continue
+        for name in targets:
+            if name in seen:
+                repeated.add(name)
+            seen.add(name)
+            if value is not None:
+                possible[name] = value
+    return {name: value for name, value in possible.items() if name not in repeated}
 
 
 def scan_source(source: str, filename: str = "<static fixture>") -> list[dict]:
@@ -68,6 +100,7 @@ def scan_source(source: str, filename: str = "<static fixture>") -> list[dict]:
         return [{"file": filename, "line": 0, "code": "SOURCE_PARSE_INVALID",
                  "detail": type(exc).__name__}]
 
+    constants = _top_level_constant_assignments(tree)
     # Basic static symbol mapping for 'from os import kill as k'.  This
     # mapping is conservative and not a whole-program or SSA guarantee.
     imported = {}
@@ -85,7 +118,7 @@ def scan_source(source: str, filename: str = "<static fixture>") -> list[dict]:
             name = imported.get(name, name)
         if not node.args:
             continue
-        value = _int_literal(node.args[0])
+        value = _int_literal(node.args[0], constants=constants)
         def flag(code: str, detail: str):
             issues.append({"file": filename, "line": node.lineno,
                            "code": code, "detail": detail})
