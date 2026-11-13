@@ -99,3 +99,28 @@ supervisor code require additional testing.
 The **original 17-scenario Windows Gate V8 remains 0/17 executed** here
 because its B23–B25 source package is not present in the accessible GitHub
 repository/session. No gate, publication or release status changes.
+
+## B37 — six simultaneous independent Jobs, final reference result
+
+- New native scenario: `six-concurrent-independent-jobs`. It constructs six
+  independent Jobs and checks isolated child lifetime behavior under
+  overlapping execution. It is **one scenario**, not six new unique tests.
+- Verified GitHub Actions run `43148437966`, exact test source commit
+  `843a2cfbdb92d1446db9742519f0b6522c741846`.
+- Windows Server 2022 job `130951681601`: **14/14 PASS**,
+  stdout `B31_RESULT pass=14 fail=0 total=14 scope=native-windows-probe-not-gate-v8`.
+- Windows Server 2025 job `130951681923`: **14/14 PASS**,
+  same bounded receipt. **28 reference scenario executions** over
+  **14 distinct scenarios**, zero recorded FAIL.
+- Structured receipt: `B37_NATIVE_EVIDENCE.json`.
+
+**Chronological clarification:** The original B23–B25 Gate V8 package
+was absent when B31–B37 were developed. It was independently recovered
+and exercised **later**, with the precise B39 null-HANDLE fix, in the
+separate review-only PR #18 and repeated in PR #20: **17 original cases
+three times per Windows 2022/2025 runner = 102 native case executions
+PASS LIMITED**. This is a *different codebase and test suite* and is
+**not** evidence that B31–B37 executed those original V8 cases.
+
+No change to R17/E5B4D NO-GO, TB09/G3 BLOCKED or full descendant
+custody BLOCKED. No production integration, merge, release or publishing.
